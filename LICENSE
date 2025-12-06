@@ -1,0 +1,75 @@
+VOYAGE ENTERPRISE DECISION SYSTEM (VEDS)
+DUAL LICENSE + PALIMPSEST OVERLAY
+
+================================================================================
+SECTION 1: CORE LICENSE (Choose One)
+================================================================================
+
+This software is available under your choice of:
+
+Option A: MIT License
+Option B: GNU Affero General Public License v3.0 (AGPL-3.0)
+
+See LICENSE-MIT and LICENSE-AGPL for full texts.
+
+Your choice of license applies to your use, modification, and distribution
+of this software. Choose the license that best fits your needs:
+
+- MIT: Maximum permissiveness, minimal obligations
+- AGPL: Copyleft protection, network use triggers source disclosure
+
+================================================================================
+SECTION 2: PALIMPSEST PHILOSOPHICAL OVERLAY
+================================================================================
+
+In addition to your chosen legal license, we encourage (but do not legally
+require) adherence to the Palimpsest principles:
+
+1. COOPERATIVE ECONOMICS
+   This software was built with cooperative economics in mind. We encourage
+   users to consider worker welfare, fair wages, and labor conditions when
+   deploying transport optimization systems. The constraint engine includes
+   facilities for encoding labor standards (ILO minimums, working hour limits)
+   as first-class optimization constraints.
+
+2. ENVIRONMENTAL RESPONSIBILITY
+   Carbon optimization is a core feature, not an afterthought. We encourage
+   users to weight environmental impact in their routing decisions and to
+   publish their carbon savings transparently.
+
+3. KNOWLEDGE SHARING
+   In the spirit of palimpsest - text written over earlier text, layers of
+   knowledge building upon each other - we encourage:
+   - Publishing papers based on this work
+   - Contributing improvements back to the community
+   - Sharing operational learnings with other users
+   - Building upon this foundation for the common good
+
+4. TRANSPARENCY
+   Transport systems affect workers, communities, and environments globally.
+   We encourage transparent operation, public APIs where feasible, and open
+   data sharing to advance the field.
+
+5. SOLIDARITY
+   This project was developed with solidarity economics principles in mind,
+   recognizing that transport optimization can either exploit or uplift
+   workers depending on how constraints are configured. Choose uplift.
+
+================================================================================
+SECTION 3: ATTRIBUTION
+================================================================================
+
+Original concept and architecture: Jonathan D.A. Jewell
+Initial implementation: Claude (Anthropic) + Jonathan D.A. Jewell
+Year: 2025
+
+When using this software, attribution is appreciated but not legally required
+under the MIT option. Under AGPL, attribution requirements apply as specified
+in that license.
+
+================================================================================
+
+For the full license texts, see:
+- LICENSE-MIT
+- LICENSE-AGPL
+- PALIMPSEST.md (philosophical principles in detail)

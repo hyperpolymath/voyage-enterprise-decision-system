@@ -1,0 +1,194 @@
+# VEDS - Voyage Enterprise Decision System
+
+**A multimodal transport optimization platform with formal verification**
+
+Compete with Infor. Built for cooperative economics.
+
+---
+
+## What is VEDS?
+
+VEDS optimizes cargo movement across **maritime, rail, road, and air** simultaneously, considering:
+
+- **Cost** - Minimize shipping expenses
+- **Carbon** - Track and optimize environmental impact
+- **Time** - Meet delivery windows
+- **Labor** - Ensure fair wages and working conditions (ILO standards)
+
+Unlike traditional TMS platforms, VEDS provides **mathematically proven** guarantees that routes satisfy constraints.
+
+---
+
+## Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                           VEDS                                     │
+├────────────────────────────────────────────────────────────────────┤
+│  Phoenix LiveView │ Julia/Genie.jl │ Pluto.jl    ← Presentation   │
+├────────────────────────────────────────────────────────────────────┤
+│              Elixir/Phoenix API Gateway                ← API       │
+├────────────────────────────────────────────────────────────────────┤
+│  Rust        │ Clojure    │ Ada/SPARK    │ Elixir     ← Domain    │
+│  (Optimizer) │ (Datalog)  │ (Proofs)     │ (Tracking)             │
+├────────────────────────────────────────────────────────────────────┤
+│       XTDB        │    SurrealDB    │    Dragonfly   ← Data       │
+│    (Bitemporal)   │   (Graph/Doc)   │     (Cache)                 │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-Modal Routing** | Optimize across ship, train, truck, plane |
+| **Formal Verification** | Ada/SPARK proofs guarantee constraint satisfaction |
+| **Bitemporal Audit** | XTDB tracks "what we knew when" for compliance |
+| **Labor Ethics** | Built-in ILO minimum wage and hours constraints |
+| **Carbon Optimization** | First-class environmental objective |
+| **Real-Time Tracking** | Sub-100ms position updates via Phoenix Channels |
+| **VoID/Linked Data** | SPARQL endpoint for data federation |
+| **Julia Visualization** | Publication-quality analytics with Makie.jl |
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| API | Elixir/Phoenix | REST, GraphQL, WebSocket |
+| Routing | Rust | High-performance path optimization |
+| Constraints | Clojure + XTDB | Datalog rules, bitemporal storage |
+| Verification | Ada/SPARK | Formal proofs (Z3/CVC5) |
+| Tracking | Elixir + Dragonfly | Real-time position handling |
+| Analytics | Julia + Makie.jl | Interactive visualization |
+| Graph/Doc | SurrealDB | Transport network, shipments |
+| Cache | Dragonfly | Hot data, geo-indexing |
+
+---
+
+## Quick Start
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/veds.git
+cd veds
+
+# Start databases
+docker-compose up -d xtdb surrealdb dragonfly
+
+# Run services (in separate terminals)
+cd src/rust-routing && cargo run
+cd src/elixir-api && mix phx.server
+cd src/clojure-constraints && clj -M:run
+cd src/julia-viz && julia --project=. -e "using VEDS; VEDS.start_dashboard()"
+
+# Access
+open http://localhost:4000  # API + Dashboard
+open http://localhost:8081  # Analytics
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Tech Stack](docs/architecture/TECH-STACK.md) | Complete technology decisions |
+| [DFD Level 0](docs/design/DFD-LEVEL-0-CONTEXT.md) | System context diagram |
+| [DFD Level 1](docs/design/DFD-LEVEL-1-MAJOR-PROCESSES.md) | Major processes |
+| [DFD Level 2](docs/design/DFD-LEVEL-2-SUBPROCESSES.md) | Sub-processes |
+| [DFD Level 3](docs/design/DFD-LEVEL-3-DETAILED.md) | Detailed data flows |
+| [ER Diagram](docs/design/ER-DIAGRAM.md) | Entity relationships |
+| [UML Diagrams](docs/design/UML-DIAGRAMS.md) | Use cases, sequences, states |
+| [Julia Viz](docs/design/JULIA-VISUALIZATION.md) | Visualization architecture |
+| [VoID Mapping](docs/vocab/VOID-MAPPING.md) | Linked data vocabulary |
+
+---
+
+## API Example
+
+```bash
+# Create shipment
+curl -X POST http://localhost:4000/api/v1/shipments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "origin": "CNSHA",
+    "destination": "GBLHR",
+    "weight_kg": 10000,
+    "deliver_by": "2025-12-15T00:00:00Z",
+    "constraints": {
+      "max_carbon_kg": 5000,
+      "min_labor_score": 0.8
+    }
+  }'
+
+# Get optimized routes
+curl http://localhost:4000/api/v1/shipments/{id}/routes
+
+# Track shipment (WebSocket)
+wscat -c ws://localhost:4000/socket/tracking?shipment_id={id}
+```
+
+---
+
+## License
+
+Dual-licensed under your choice of:
+
+- **MIT License** - Maximum permissiveness
+- **AGPL-3.0** - Copyleft protection
+
+Plus the **Palimpsest Philosophical Overlay** encouraging:
+- Cooperative economics
+- Environmental responsibility
+- Knowledge sharing
+- Worker solidarity
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+## Contributing
+
+1. Read the design docs first
+2. Open an issue for discussion
+3. Submit PR against `develop` branch
+4. Ensure formal proofs pass (for constraint changes)
+
+---
+
+## Roadmap
+
+### Phase 1: MVP (Current)
+- [x] Design documentation
+- [ ] Database schemas
+- [ ] Basic routing engine
+- [ ] API skeleton
+- [ ] Constraint DSL
+
+### Phase 2: Core Features
+- [ ] Formal verification integration
+- [ ] Real-time tracking
+- [ ] Julia dashboards
+- [ ] VoID/SPARQL endpoint
+
+### Phase 3: Production
+- [ ] Transport API integrations
+- [ ] Carbon accounting
+- [ ] Labor compliance reporting
+- [ ] Kubernetes deployment
+
+---
+
+## Credits
+
+**Concept & Architecture:** Jonathan D.A. Jewell
+**Initial Design:** Claude (Anthropic)
+**Year:** 2025
+
+---
+
+*Built with cooperative economics in mind. Workers deserve fair treatment.*
