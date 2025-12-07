@@ -1,0 +1,140 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: veds
+
+resources:
+  - ../base
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+
+# Production-specific patches
+patches:
+  # Increase replicas for production
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      name: rust-optimizer
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: Deployment
+      name: elixir-api
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      name: clojure-constraints
+
+  # Production resource limits
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+    target:
+      kind: Deployment
+      name: rust-optimizer
+
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+    target:
+      kind: Deployment
+      name: elixir-api
+
+  # Use Longhorn storage class for production (RKE2 default)
+  - patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: longhorn
+    target:
+      kind: StatefulSet
+
+  # Larger storage for production databases
+  - patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 50Gi
+    target:
+      kind: StatefulSet
+      name: xtdb
+  - patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 50Gi
+    target:
+      kind: StatefulSet
+      name: surrealdb
+  - patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 20Gi
+    target:
+      kind: StatefulSet
+      name: dragonfly
+
+  # Add node affinity for production
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/affinity
+        value:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/worker
+                      operator: Exists
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app: rust-optimizer
+                  topologyKey: kubernetes.io/hostname
+    target:
+      kind: Deployment
+      name: rust-optimizer
+
+  # Add service account to all deployments
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/serviceAccountName
+        value: veds-service-account
+    target:
+      kind: Deployment
+
+# Production configuration
+configMapGenerator:
+  - name: veds-config
+    behavior: merge
+    literals:
+      - RUST_LOG=warn
+      - LOG_LEVEL=warn
+      - PHX_HOST=api.veds.example.com
+
+# Note: Production secrets should be managed via Sealed Secrets or External Secrets Operator
+# Do not store actual secrets in git

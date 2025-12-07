@@ -1,0 +1,75 @@
+# ArgoCD ApplicationSet for multi-environment deployment
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: veds-environments
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            cluster: in-cluster
+            path: deploy/k3s/dev
+            autoSync: true
+          - env: staging
+            cluster: in-cluster
+            path: deploy/k3s/dev
+            autoSync: true
+          - env: prod
+            cluster: production-cluster
+            path: deploy/rke2/prod
+            autoSync: false  # Manual approval for prod
+
+  template:
+    metadata:
+      name: 'veds-{{env}}'
+      namespace: argocd
+      labels:
+        app.kubernetes.io/name: veds
+        environment: '{{env}}'
+    spec:
+      project: veds
+
+      source:
+        repoURL: https://github.com/Hyperpolymath/voyage-enterprise-decision-system.git
+        targetRevision: HEAD
+        path: '{{path}}'
+
+      destination:
+        server: '{{cluster}}'
+        namespace: 'veds-{{env}}'
+
+      syncPolicy:
+        automated:
+          prune: '{{autoSync}}'
+          selfHeal: '{{autoSync}}'
+        syncOptions:
+          - CreateNamespace=true
+
+---
+# Notifications for deployment events
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  trigger.on-deployed: |
+    - description: Application deployed
+      when: app.status.operationState.phase in ['Succeeded']
+      send:
+        - slack-deployment
+  trigger.on-health-degraded: |
+    - description: Application health degraded
+      when: app.status.health.status == 'Degraded'
+      send:
+        - slack-health-alert
+  template.slack-deployment: |
+    message: |
+      :rocket: *{{.app.metadata.name}}* deployed to *{{.app.spec.destination.namespace}}*
+      Revision: {{.app.status.sync.revision}}
+  template.slack-health-alert: |
+    message: |
+      :warning: *{{.app.metadata.name}}* health is *{{.app.status.health.status}}*
+      Details: {{.app.status.health.message}}

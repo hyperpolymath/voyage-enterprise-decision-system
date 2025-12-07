@@ -1,0 +1,115 @@
+# OpenTelemetry Collector Configuration
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Scrape Prometheus metrics from services
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'veds-services'
+          scrape_interval: 15s
+          static_configs:
+            - targets:
+                - 'rust-optimizer:9090'
+                - 'elixir-api:4000'
+                - 'clojure-constraints:8080'
+
+  # Host metrics
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      network:
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1000
+    spike_limit_mib: 200
+
+  # Add resource attributes
+  resource:
+    attributes:
+      - key: service.namespace
+        value: veds
+        action: upsert
+      - key: deployment.environment
+        from_attribute: env
+        action: upsert
+
+  # Filter out noisy spans
+  filter:
+    spans:
+      exclude:
+        match_type: regexp
+        attributes:
+          - key: http.route
+            value: "/health|/metrics"
+
+exporters:
+  # Prometheus for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8888"
+    namespace: veds
+    const_labels:
+      environment: production
+
+  # Debug logging (dev only)
+  logging:
+    loglevel: info
+
+  # Jaeger for traces (optional)
+  # jaeger:
+  #   endpoint: jaeger-collector:14250
+  #   tls:
+  #     insecure: true
+
+  # OTLP to external service (e.g., Grafana Cloud, Honeycomb)
+  # otlp:
+  #   endpoint: "https://otlp.example.com:4317"
+  #   headers:
+  #     authorization: "Bearer ${OTLP_TOKEN}"
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource, filter]
+      exporters: [logging]
+
+    metrics:
+      receivers: [otlp, prometheus, hostmetrics]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [logging]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8889

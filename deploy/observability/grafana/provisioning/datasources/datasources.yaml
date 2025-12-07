@@ -1,0 +1,24 @@
+# Grafana Datasource Provisioning
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+      httpMethod: POST
+
+  - name: XTDB
+    type: postgres
+    access: proxy
+    url: xtdb:5432
+    database: xtdb
+    user: xtdb
+    editable: false
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1400

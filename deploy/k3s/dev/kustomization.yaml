@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: veds
+
+resources:
+  - ../base
+
+namePrefix: dev-
+
+commonLabels:
+  environment: development
+
+# Dev-specific patches
+patches:
+  # Reduce replicas for dev
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+      name: .*
+
+  # Reduce resource limits for dev
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "500m"
+    target:
+      kind: Deployment
+
+  # Use local-path storage class (k3s default)
+  - patch: |-
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: local-path
+      - op: replace
+        path: /spec/volumeClaimTemplates/0/spec/resources/requests/storage
+        value: 1Gi
+    target:
+      kind: StatefulSet
+
+# Dev secrets (non-sensitive for local dev)
+secretGenerator:
+  - name: veds-secrets
+    behavior: replace
+    literals:
+      - phoenix-secret=dev-secret-key-base-not-for-production
+      - surrealdb-password=dev-password
+      - dragonfly-password=dev-password
+
+configMapGenerator:
+  - name: veds-config
+    behavior: merge
+    literals:
+      - RUST_LOG=debug
+      - LOG_LEVEL=debug

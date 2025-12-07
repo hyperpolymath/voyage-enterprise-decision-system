@@ -1,0 +1,97 @@
+# ArgoCD Application for VEDS
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: veds
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Hyperpolymath/voyage-enterprise-decision-system.git
+    targetRevision: HEAD
+    path: deploy/k3s/dev  # Change to deploy/rke2/prod for production
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: veds
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health checks
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore HPA-managed replicas
+
+---
+# ArgoCD Project for VEDS
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: veds
+  namespace: argocd
+spec:
+  description: Voyage Enterprise Decision System
+
+  sourceRepos:
+    - https://github.com/Hyperpolymath/voyage-enterprise-decision-system.git
+
+  destinations:
+    - namespace: veds
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: '*'
+    - group: apps
+      kind: '*'
+    - group: autoscaling
+      kind: '*'
+    - group: policy
+      kind: '*'
+    - group: networking.k8s.io
+      kind: '*'
+    - group: traefik.containo.us
+      kind: '*'
+
+  roles:
+    - name: developer
+      description: Developer access
+      policies:
+        - p, proj:veds:developer, applications, get, veds/*, allow
+        - p, proj:veds:developer, applications, sync, veds/*, allow
+      groups:
+        - veds-developers
+
+    - name: admin
+      description: Admin access
+      policies:
+        - p, proj:veds:admin, applications, *, veds/*, allow
+      groups:
+        - veds-admins

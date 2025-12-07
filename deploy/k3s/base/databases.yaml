@@ -1,0 +1,250 @@
+# XTDB - Bitemporal Constraint Storage
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: xtdb
+  namespace: veds
+spec:
+  serviceName: xtdb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xtdb
+  template:
+    metadata:
+      labels:
+        app: xtdb
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+    spec:
+      containers:
+        - name: xtdb
+          image: ghcr.io/xtdb/xtdb:2.x
+          ports:
+            - containerPort: 3000
+          env:
+            - name: XTDB_CONFIG
+              value: /etc/xtdb/config.yaml
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/xtdb
+            - name: config
+              mountPath: /etc/xtdb
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: xtdb-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xtdb
+  namespace: veds
+spec:
+  selector:
+    app: xtdb
+  ports:
+    - port: 3000
+      targetPort: 3000
+  clusterIP: None
+
+---
+# SurrealDB - Graph Database
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: surrealdb
+  namespace: veds
+spec:
+  serviceName: surrealdb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: surrealdb
+  template:
+    metadata:
+      labels:
+        app: surrealdb
+    spec:
+      containers:
+        - name: surrealdb
+          image: surrealdb/surrealdb:v1.1
+          args:
+            - start
+            - --user
+            - root
+            - --pass
+            - $(SURREAL_PASSWORD)
+            - file:/data/veds.db
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SURREAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: surrealdb-password
+            - name: SURREAL_CAPS_ALLOW_NET
+              value: "true"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: surrealdb
+  namespace: veds
+spec:
+  selector:
+    app: surrealdb
+  ports:
+    - port: 8000
+      targetPort: 8000
+  clusterIP: None
+
+---
+# Dragonfly - High-Performance Cache
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dragonfly
+  namespace: veds
+spec:
+  serviceName: dragonfly
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dragonfly
+  template:
+    metadata:
+      labels:
+        app: dragonfly
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "6379"
+    spec:
+      containers:
+        - name: dragonfly
+          image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+          args:
+            - --maxmemory
+            - "512mb"
+            - --cache_mode
+            - "true"
+            - --requirepass
+            - $(DRAGONFLY_PASSWORD)
+          ports:
+            - containerPort: 6379
+          env:
+            - name: DRAGONFLY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: dragonfly-password
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dragonfly
+  namespace: veds
+spec:
+  selector:
+    app: dragonfly
+  ports:
+    - port: 6379
+      targetPort: 6379
+  clusterIP: None

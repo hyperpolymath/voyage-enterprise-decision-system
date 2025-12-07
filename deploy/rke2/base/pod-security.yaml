@@ -1,0 +1,79 @@
+# Pod Security Standards for RKE2 (FIPS-compliant)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: veds
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+
+---
+# Security Context Constraints
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: veds-restricted
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfiles: 'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+
+---
+# Service Account for VEDS services
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: veds-service-account
+  namespace: veds
+automountServiceAccountToken: false
+
+---
+# Role for service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: veds-role
+  namespace: veds
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: veds-role-binding
+  namespace: veds
+subjects:
+  - kind: ServiceAccount
+    name: veds-service-account
+    namespace: veds
+roleRef:
+  kind: Role
+  name: veds-role
+  apiGroup: rbac.authorization.k8s.io

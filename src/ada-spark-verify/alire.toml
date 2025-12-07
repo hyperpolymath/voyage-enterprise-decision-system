@@ -1,0 +1,28 @@
+# Alire package manifest for VEDS SPARK Verification
+
+name = "veds_verify"
+version = "0.1.0"
+description = "SPARK-verified constraint evaluation for VEDS"
+authors = ["VEDS Team"]
+maintainers = ["veds@example.com"]
+maintainers-logins = ["veds-team"]
+licenses = "MIT OR AGPL-3.0"
+
+[[depends-on]]
+gnat = ">=12"
+
+[gpr-externals]
+MODE = ["debug", "release", "prove"]
+
+[gpr-set-externals]
+MODE = "release"
+
+[configuration]
+generate_ada = false
+generate_c = false
+generate_gpr = false
+auto_gpr_with = false
+
+[[actions]]
+type = "post-build"
+command = ["echo", "Build complete. Run 'gnatprove -P veds_verify.gpr' for formal verification."]
