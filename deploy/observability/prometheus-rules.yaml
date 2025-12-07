@@ -1,0 +1,138 @@
+# Prometheus Alerting Rules for VEDS
+groups:
+  - name: veds-availability
+    rules:
+      # Service down alerts
+      - alert: VEDSServiceDown
+        expr: up{job=~"veds-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "VEDS service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute."
+
+      # High error rate
+      - alert: VEDSHighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5..", job=~"veds-.*"}[5m])) by (job)
+          / sum(rate(http_requests_total{job=~"veds-.*"}[5m])) by (job)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "{{ $labels.job }} has error rate > 5% for 5 minutes."
+
+      # API latency
+      - alert: VEDSHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="veds-elixir-api"}[5m])) by (le))
+          > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency"
+          description: "95th percentile latency > 1s for 5 minutes."
+
+  - name: veds-resources
+    rules:
+      # Memory usage
+      - alert: VEDSHighMemoryUsage
+        expr: |
+          container_memory_usage_bytes{namespace="veds"}
+          / container_spec_memory_limit_bytes{namespace="veds"}
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage in {{ $labels.pod }}"
+          description: "{{ $labels.pod }} memory usage > 85%."
+
+      # CPU usage
+      - alert: VEDSHighCPUUsage
+        expr: |
+          sum(rate(container_cpu_usage_seconds_total{namespace="veds"}[5m])) by (pod)
+          / sum(container_spec_cpu_quota{namespace="veds"}/container_spec_cpu_period{namespace="veds"}) by (pod)
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage in {{ $labels.pod }}"
+          description: "{{ $labels.pod }} CPU usage > 85%."
+
+      # PVC usage
+      - alert: VEDSPVCNearlyFull
+        expr: |
+          kubelet_volume_stats_used_bytes{namespace="veds"}
+          / kubelet_volume_stats_capacity_bytes{namespace="veds"}
+          > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PVC {{ $labels.persistentvolumeclaim }} nearly full"
+          description: "PVC usage > 85%."
+
+  - name: veds-business
+    rules:
+      # Optimization throughput
+      - alert: VEDSLowOptimizationThroughput
+        expr: |
+          sum(rate(veds_routes_optimized_total[5m])) < 1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low route optimization throughput"
+          description: "Less than 1 route/sec optimized for 15 minutes."
+
+      # Constraint violations spike
+      - alert: VEDSConstraintViolationSpike
+        expr: |
+          sum(rate(veds_constraint_violations_total[5m])) by (constraint_type)
+          > sum(rate(veds_constraint_violations_total[1h])) by (constraint_type) * 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spike in {{ $labels.constraint_type }} violations"
+          description: "Constraint violations doubled vs 1h average."
+
+      # Database connection issues
+      - alert: VEDSDatabaseConnectionIssues
+        expr: |
+          veds_db_connection_errors_total > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection errors"
+          description: "Database connection errors detected."
+
+  - name: veds-slo
+    rules:
+      # SLO: 99.9% availability
+      - alert: VEDSAvailabilitySLOBreach
+        expr: |
+          (1 - avg_over_time(up{job="veds-elixir-api"}[1d])) > 0.001
+        labels:
+          severity: critical
+        annotations:
+          summary: "VEDS availability SLO breach"
+          description: "Availability dropped below 99.9% in last 24h."
+
+      # SLO: P95 latency < 500ms
+      - alert: VEDSLatencySLOBreach
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="veds-elixir-api"}[1d])) by (le))
+          > 0.5
+        labels:
+          severity: warning
+        annotations:
+          summary: "VEDS latency SLO breach"
+          description: "P95 latency exceeded 500ms over last 24h."

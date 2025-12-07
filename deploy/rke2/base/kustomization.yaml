@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: veds
+
+resources:
+  - ../../k3s/base
+  - pod-security.yaml
+  - resource-quotas.yaml
+  - hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: veds
+  app.kubernetes.io/managed-by: kustomize
+  environment: production
+
+# Production images with specific tags (not :latest)
+images:
+  - name: ghcr.io/veds/rust-optimizer
+    newTag: v1.0.0
+  - name: ghcr.io/veds/elixir-api
+    newTag: v1.0.0
+  - name: ghcr.io/veds/clojure-constraints
+    newTag: v1.0.0
+  - name: ghcr.io/veds/julia-viz
+    newTag: v1.0.0

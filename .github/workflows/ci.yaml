@@ -1,0 +1,365 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  REGISTRY: ghcr.io
+  RUST_VERSION: "1.75"
+  ELIXIR_VERSION: "1.16"
+  OTP_VERSION: "26"
+  JULIA_VERSION: "1.10"
+
+jobs:
+  # ===========================================================================
+  # Rust Optimizer
+  # ===========================================================================
+  rust-build:
+    name: Rust Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/rust-routing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: clippy, rustfmt
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src/rust-routing/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src/rust-routing/Cargo.lock') }}
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Test
+        run: cargo test --all-features
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-optimizer
+          path: src/rust-routing/target/release/veds-optimizer
+
+  # ===========================================================================
+  # Elixir API
+  # ===========================================================================
+  elixir-build:
+    name: Elixir Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/elixir-api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: veds_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            src/elixir-api/deps
+            src/elixir-api/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('src/elixir-api/mix.lock') }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Compile (warnings as errors)
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/veds_test
+          MIX_ENV: test
+
+  # ===========================================================================
+  # Clojure Constraints
+  # ===========================================================================
+  clojure-build:
+    name: Clojure Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/clojure-constraints
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 1.11.1.1435
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-clj-${{ hashFiles('src/clojure-constraints/deps.edn') }}
+
+      - name: Run tests
+        run: clojure -M:test
+
+      - name: Build uberjar
+        run: clojure -T:build uber
+
+  # ===========================================================================
+  # Julia Visualization
+  # ===========================================================================
+  julia-build:
+    name: Julia Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/julia-viz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ env.JULIA_VERSION }}
+
+      - name: Cache Julia packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.julia/artifacts
+            ~/.julia/packages
+          key: ${{ runner.os }}-julia-${{ hashFiles('src/julia-viz/Project.toml') }}
+
+      - name: Install dependencies
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Run tests
+        run: julia --project=. -e 'using Pkg; Pkg.test()'
+
+  # ===========================================================================
+  # Ada/SPARK Verification
+  # ===========================================================================
+  ada-verify:
+    name: Ada/SPARK Verification
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/ada-spark-verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup GNAT
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnat gprbuild
+
+      - name: Build
+        run: gprbuild -P veds_verify.gpr -XMODE=release
+
+      - name: Run verification tests
+        run: ./bin/veds_verify
+
+      # SPARK proof (optional, requires SPARK Pro or Community)
+      # - name: Run SPARK proofs
+      #   run: gnatprove -P veds_verify.gpr --level=2
+
+  # ===========================================================================
+  # Integration Tests
+  # ===========================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [rust-build, elixir-build, clojure-build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: pip install -r tests/integration/requirements.txt
+
+      - name: Run integration tests
+        run: pytest tests/integration/ -v --tb=short
+        env:
+          HYPOTHESIS_PROFILE: ci
+
+  # ===========================================================================
+  # Property Tests
+  # ===========================================================================
+  property-tests:
+    name: Property-Based Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: pip install -r tests/integration/requirements.txt
+
+      - name: Run property tests
+        run: pytest tests/property/ -v --hypothesis-profile=ci
+
+  # ===========================================================================
+  # Security Scanning
+  # ===========================================================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Rust audit
+        working-directory: src/rust-routing
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
+  # ===========================================================================
+  # Build and Push Images
+  # ===========================================================================
+  build-images:
+    name: Build Container Images
+    runs-on: ubuntu-latest
+    needs: [rust-build, elixir-build, clojure-build, julia-build, integration-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service:
+          - name: rust-optimizer
+            context: src/rust-routing
+          - name: elixir-api
+            context: src/elixir-api
+          - name: clojure-constraints
+            context: src/clojure-constraints
+          - name: julia-viz
+            context: src/julia-viz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-${{ matrix.service.name }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================================================
+  # Update ArgoCD
+  # ===========================================================================
+  update-argocd:
+    name: Update ArgoCD Image Tags
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update image tags in kustomization
+        run: |
+          cd deploy/k3s/base
+          kustomize edit set image \
+            ghcr.io/veds/rust-optimizer=ghcr.io/${{ github.repository_owner }}/veds-rust-optimizer:${{ github.sha }} \
+            ghcr.io/veds/elixir-api=ghcr.io/${{ github.repository_owner }}/veds-elixir-api:${{ github.sha }} \
+            ghcr.io/veds/clojure-constraints=ghcr.io/${{ github.repository_owner }}/veds-clojure-constraints:${{ github.sha }} \
+            ghcr.io/veds/julia-viz=ghcr.io/${{ github.repository_owner }}/veds-julia-viz:${{ github.sha }}
+
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add deploy/
+          git commit -m "ci: update image tags to ${{ github.sha }}" || exit 0
+          git push

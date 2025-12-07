@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: veds-config
+  namespace: veds
+data:
+  # Database URLs (service discovery)
+  XTDB_URL: "http://xtdb:3000"
+  SURREALDB_URL: "http://surrealdb:8000"
+  DRAGONFLY_URL: "redis://dragonfly:6379"
+
+  # Service URLs
+  OPTIMIZER_URL: "rust-optimizer:50051"
+  API_URL: "http://elixir-api:4000"
+  CONSTRAINTS_URL: "http://clojure-constraints:8080"
+
+  # Observability
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTEL_SERVICE_NAME: "veds"
+
+  # Logging
+  RUST_LOG: "info"
+  LOG_LEVEL: "info"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xtdb-config
+  namespace: veds
+data:
+  config.yaml: |
+    server:
+      port: 3000
+    storage:
+      type: local
+      path: /var/lib/xtdb/data
+    indexer:
+      rows-per-chunk: 102400
+    compactor:
+      enabled: true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: surrealdb-init
+  namespace: veds
+data:
+  init.surql: |
+    -- Initialize VEDS transport schema
+    DEFINE NAMESPACE veds;
+    USE NS veds;
+    DEFINE DATABASE transport;
+    USE DB transport;
+
+    -- Define tables
+    DEFINE TABLE port SCHEMALESS;
+    DEFINE TABLE carrier SCHEMALESS;
+    DEFINE TABLE transport_edge SCHEMALESS TYPE RELATION FROM port TO port;
+    DEFINE TABLE shipment SCHEMALESS;
+    DEFINE TABLE route SCHEMALESS;

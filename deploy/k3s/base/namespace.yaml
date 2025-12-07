@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: veds
+  labels:
+    app.kubernetes.io/name: veds
+    app.kubernetes.io/part-of: voyage-enterprise-decision-system

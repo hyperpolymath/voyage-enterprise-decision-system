@@ -1,0 +1,222 @@
+# VEDS nerdctl/containerd Compose
+# For local development with k3s-compatible runtime
+#
+# Usage:
+#   nerdctl compose -f nerdctl-compose.yaml up -d
+#   nerdctl compose -f nerdctl-compose.yaml logs -f
+#   nerdctl compose -f nerdctl-compose.yaml down
+#
+# Note: nerdctl compose is compatible with Docker Compose v3 syntax
+
+version: "3.8"
+
+services:
+  # ===========================================================================
+  # Databases
+  # ===========================================================================
+
+  xtdb:
+    image: ghcr.io/xtdb/xtdb:2.x
+    container_name: veds-xtdb
+    ports:
+      - "3000:3000"
+    volumes:
+      - xtdb-data:/var/lib/xtdb
+      - ./config/xtdb.yaml:/etc/xtdb/config.yaml:ro
+    environment:
+      XTDB_CONFIG: /etc/xtdb/config.yaml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  surrealdb:
+    image: surrealdb/surrealdb:v1.1
+    container_name: veds-surrealdb
+    ports:
+      - "8000:8000"
+    volumes:
+      - surrealdb-data:/data
+    command: start --user root --pass root file:/data/veds.db
+    environment:
+      SURREAL_CAPS_ALLOW_NET: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: veds-dragonfly
+    ports:
+      - "6379:6379"
+    volumes:
+      - dragonfly-data:/data
+    command: --maxmemory 512mb --cache_mode true
+    ulimits:
+      memlock: -1
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  # ===========================================================================
+  # Application Services
+  # ===========================================================================
+
+  rust-optimizer:
+    build:
+      context: ./src/rust-routing
+      dockerfile: Dockerfile
+    container_name: veds-optimizer
+    ports:
+      - "50051:50051"
+      - "9090:9090"  # Metrics
+    environment:
+      SURREALDB_URL: http://surrealdb:8000
+      DRAGONFLY_URL: redis://dragonfly:6379
+      RUST_LOG: info
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  elixir-api:
+    build:
+      context: ./src/elixir-api
+      dockerfile: Dockerfile
+    container_name: veds-api
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/veds
+      SURREALDB_URL: http://surrealdb:8000
+      DRAGONFLY_URL: redis://dragonfly:6379
+      OPTIMIZER_URL: rust-optimizer:50051
+      SECRET_KEY_BASE: development-secret-key-base-change-in-production
+      PHX_HOST: localhost
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      - rust-optimizer
+      - dragonfly
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  clojure-constraints:
+    build:
+      context: ./src/clojure-constraints
+      dockerfile: Dockerfile
+    container_name: veds-constraints
+    ports:
+      - "8081:8080"
+    environment:
+      XTDB_URL: http://xtdb:3000
+      DRAGONFLY_URL: redis://dragonfly:6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      xtdb:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  julia-viz:
+    build:
+      context: ./src/julia-viz
+      dockerfile: Dockerfile
+    container_name: veds-viz
+    ports:
+      - "8080:8080"
+    environment:
+      API_URL: http://elixir-api:4000
+      DRAGONFLY_URL: redis://dragonfly:6379
+    depends_on:
+      - elixir-api
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  # ===========================================================================
+  # Observability (Dev mode - lightweight)
+  # ===========================================================================
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: veds-otel
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./deploy/observability/otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: veds-prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./deploy/observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: veds-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deploy/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    restart: unless-stopped
+    networks:
+      - veds-network
+
+# ===========================================================================
+# Networks and Volumes
+# ===========================================================================
+
+networks:
+  veds-network:
+    driver: bridge
+
+volumes:
+  xtdb-data:
+  surrealdb-data:
+  dragonfly-data:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,276 @@
+# Rust Optimizer Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-optimizer
+  namespace: veds
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rust-optimizer
+  template:
+    metadata:
+      labels:
+        app: rust-optimizer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: optimizer
+          image: ghcr.io/veds/rust-optimizer:latest
+          ports:
+            - containerPort: 50051
+              name: grpc
+            - containerPort: 9090
+              name: metrics
+          envFrom:
+            - configMapRef:
+                name: veds-config
+          env:
+            - name: DRAGONFLY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: dragonfly-password
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-optimizer
+  namespace: veds
+spec:
+  selector:
+    app: rust-optimizer
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+    - port: 9090
+      targetPort: 9090
+      name: metrics
+
+---
+# Elixir API Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elixir-api
+  namespace: veds
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: elixir-api
+  template:
+    metadata:
+      labels:
+        app: elixir-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "4000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/veds/elixir-api:latest
+          ports:
+            - containerPort: 4000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: veds-config
+          env:
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: phoenix-secret
+            - name: DRAGONFLY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: dragonfly-password
+            - name: PHX_HOST
+              value: "api.veds.local"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elixir-api
+  namespace: veds
+spec:
+  selector:
+    app: elixir-api
+  ports:
+    - port: 4000
+      targetPort: 4000
+      name: http
+
+---
+# Clojure Constraints Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clojure-constraints
+  namespace: veds
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clojure-constraints
+  template:
+    metadata:
+      labels:
+        app: clojure-constraints
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+        - name: constraints
+          image: ghcr.io/veds/clojure-constraints:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: veds-config
+          env:
+            - name: DRAGONFLY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veds-secrets
+                  key: dragonfly-password
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clojure-constraints
+  namespace: veds
+spec:
+  selector:
+    app: clojure-constraints
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+
+---
+# Julia Visualization Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: julia-viz
+  namespace: veds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: julia-viz
+  template:
+    metadata:
+      labels:
+        app: julia-viz
+    spec:
+      containers:
+        - name: viz
+          image: ghcr.io/veds/julia-viz:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: veds-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: julia-viz
+  namespace: veds
+spec:
+  selector:
+    app: julia-viz
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http

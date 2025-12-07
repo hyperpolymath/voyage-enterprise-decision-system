@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      # Build and push all service images with version tag
+      - name: Build rust-optimizer
+        uses: docker/build-push-action@v5
+        with:
+          context: src/rust-routing
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-rust-optimizer:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-rust-optimizer:latest
+
+      - name: Build elixir-api
+        uses: docker/build-push-action@v5
+        with:
+          context: src/elixir-api
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-elixir-api:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-elixir-api:latest
+
+      - name: Build clojure-constraints
+        uses: docker/build-push-action@v5
+        with:
+          context: src/clojure-constraints
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-clojure-constraints:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-clojure-constraints:latest
+
+      - name: Build julia-viz
+        uses: docker/build-push-action@v5
+        with:
+          context: src/julia-viz
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-julia-viz:${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-julia-viz:latest
+
+      # Update production kustomization
+      - name: Update production image tags
+        run: |
+          cd deploy/rke2/base
+          sed -i "s/newTag:.*/newTag: v${{ steps.version.outputs.VERSION }}/" kustomization.yaml
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: |
+            deploy/k3s/base/*.yaml
+            deploy/rke2/prod/*.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit updated manifests
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add deploy/
+          git commit -m "release: update manifests for v${{ steps.version.outputs.VERSION }}"
+          git push origin HEAD:main

@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: veds
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - databases.yaml
+  - services.yaml
+  - ingress.yaml
+  - network-policy.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: veds
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: ghcr.io/veds/rust-optimizer
+    newTag: latest
+  - name: ghcr.io/veds/elixir-api
+    newTag: latest
+  - name: ghcr.io/veds/clojure-constraints
+    newTag: latest
+  - name: ghcr.io/veds/julia-viz
+    newTag: latest

@@ -1,0 +1,82 @@
+# Traefik Ingress for k3s
+# k3s comes with Traefik as default ingress controller
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: veds-ingress
+  namespace: veds
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - api.veds.local
+        - viz.veds.local
+      secretName: veds-tls
+  rules:
+    - host: api.veds.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: elixir-api
+                port:
+                  number: 4000
+    - host: viz.veds.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: julia-viz
+                port:
+                  number: 8080
+    - host: constraints.veds.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: clojure-constraints
+                port:
+                  number: 8080
+
+---
+# IngressRoute for WebSocket support (Phoenix Channels)
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: veds-websocket
+  namespace: veds
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`api.veds.local`) && PathPrefix(`/socket`)
+      kind: Rule
+      services:
+        - name: elixir-api
+          port: 4000
+      middlewares:
+        - name: websocket-headers
+  tls:
+    secretName: veds-tls
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: websocket-headers
+  namespace: veds
+spec:
+  headers:
+    customRequestHeaders:
+      Connection: "Upgrade"
+      Upgrade: "websocket"
