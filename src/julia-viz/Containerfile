@@ -3,7 +3,7 @@ FROM julia:1.10-bookworm
 WORKDIR /app
 
 # Install system dependencies for graphics
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apk add --no-cache -y \
     libgl1-mesa-glx \
     libxrandr2 \
     libxinerama1 \

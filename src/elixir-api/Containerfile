@@ -4,7 +4,7 @@
 # Build stage
 FROM elixir:1.16-otp-26-alpine AS builder
 
-RUN apk add --no-cache build-base git npm
+RUN apk add --no-cache --no-cache build-base git npm
 
 WORKDIR /app
 
@@ -41,9 +41,9 @@ RUN mix compile
 RUN mix release
 
 # Runtime stage
-FROM alpine:3.19 AS runtime
+FROM cgr.dev/chainguard/wolfi-base:3.19 AS runtime
 
-RUN apk add --no-cache libstdc++ openssl ncurses-libs
+RUN apk add --no-cache --no-cache libstdc++ openssl ncurses-libs
 
 WORKDIR /app
 

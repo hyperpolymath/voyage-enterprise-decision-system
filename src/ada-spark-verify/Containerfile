@@ -17,12 +17,12 @@ RUN alr init --in-place -n veds_verify && \
 # RUN gnatprove -P veds_verify.gpr --level=2 --report=all
 
 # Create minimal runtime image
-FROM debian:bookworm-slim
+FROM cgr.dev/chainguard/wolfi-base:bookworm-slim
 
 WORKDIR /app
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apk add --no-cache -y \
     libgnat-12 \
     && rm -rf /var/lib/apt/lists/*
 

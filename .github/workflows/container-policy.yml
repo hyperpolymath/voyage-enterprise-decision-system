@@ -1,0 +1,24 @@
+name: Container Policy
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce container policy
+        run: |
+          # Block new Dockerfiles
+          NEW_DOCKER=$(git diff --name-only --diff-filter=A HEAD~1 2>/dev/null | grep -iE 'dockerfile' || true)
+          if [ -n "$NEW_DOCKER" ]; then
+            echo "❌ New Dockerfile detected. Use Containerfile instead."
+            exit 1
+          fi
+          
+          # Check for docker command usage in scripts
+          DOCKER_CMD=$(grep -r "docker build\|docker run\|docker push" --include="*.sh" --include="*.yml" --include="*.yaml" . 2>/dev/null | grep -v "nerdctl\|podman" | head -5 || true)
+          if [ -n "$DOCKER_CMD" ]; then
+            echo "⚠️ docker command found. Prefer nerdctl or podman:"
+            echo "$DOCKER_CMD"
+          fi
+          
+          echo "✅ Container policy check passed"
