@@ -1,3 +1,0 @@
-# VEDS Scripts Dependencies
-httpx>=0.25.0
-redis>=5.0.0
