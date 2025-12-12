@@ -463,16 +463,16 @@ GEOADD geo:ports {lon} {lat} {port_id}
 ## VoID Vocabulary Alignment
 
 ```turtle
-@prefix void: <http://rdfs.org/ns/void#> .
+@prefix void: <https://rdfs.org/ns/void#> .
 @prefix veds: <https://veds.example.org/vocab#> .
-@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dct: <https://purl.org/dc/terms/> .
 
 veds:TransportNetwork a void:Dataset ;
     dct:title "VEDS Transport Network" ;
-    void:feature <http://www.w3.org/ns/formats/N-Triples> ;
+    void:feature <https://www.w3.org/ns/formats/N-Triples> ;
     void:sparqlEndpoint <https://veds.example.org/sparql> ;
     void:exampleResource veds:port/NLRTM ;
-    void:vocabulary <http://www.w3.org/2003/01/geo/wgs84_pos#> ;
+    void:vocabulary <https://www.w3.org/2003/01/geo/wgs84_pos#> ;
     void:subset veds:Ports, veds:Edges, veds:Carriers .
 
 veds:Ports a void:Dataset ;
@@ -485,7 +485,7 @@ veds:Edges a void:Dataset ;
 
 veds:Decisions a void:Dataset ;
     dct:title "VEDS Decision Audit Trail" ;
-    void:feature <http://www.w3.org/ns/formats/N-Quads> ; # bitemporality
+    void:feature <https://www.w3.org/ns/formats/N-Quads> ; # bitemporality
     void:class veds:Decision ;
     void:subset veds:Constraints, veds:Evaluations, veds:Proofs .
 ```

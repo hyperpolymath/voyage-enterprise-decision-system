@@ -14,14 +14,14 @@ VoID (Vocabulary of Interlinked Datasets) is an RDF vocabulary for describing da
 ## VEDS as a VoID Dataset
 
 ```turtle
-@prefix void:    <http://rdfs.org/ns/void#> .
-@prefix dct:     <http://purl.org/dc/terms/> .
-@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
-@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix void:    <https://rdfs.org/ns/void#> .
+@prefix dct:     <https://purl.org/dc/terms/> .
+@prefix foaf:    <https://xmlns.com/foaf/0.1/> .
+@prefix xsd:     <https://www.w3.org/2001/XMLSchema#> .
 @prefix veds:    <https://veds.example.org/vocab#> .
 @prefix vedsdat: <https://veds.example.org/data/> .
-@prefix geo:     <http://www.w3.org/2003/01/geo/wgs84_pos#> .
-@prefix schema:  <http://schema.org/> .
+@prefix geo:     <https://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix schema:  <https://schema.org/> .
 
 # ==============================================================================
 # VEDS Root Dataset
@@ -41,7 +41,7 @@ vedsdat:root a void:Dataset ;
     void:uriLookupEndpoint <https://veds.example.org/lookup?uri=> ;
 
     # Technical details
-    void:feature <http://www.w3.org/ns/formats/N-Quads> ;  # bitemporality
+    void:feature <https://www.w3.org/ns/formats/N-Quads> ;  # bitemporality
     void:vocabulary veds: , geo: , schema: ;
 
     # Subsets
@@ -151,7 +151,7 @@ vedsdat:decisions a void:Dataset ;
     dct:description "Bitemporal record of all routing decisions with proofs"@en ;
 
     # Bitemporal feature
-    void:feature <http://www.w3.org/ns/formats/N-Quads> ;
+    void:feature <https://www.w3.org/ns/formats/N-Quads> ;
     void:feature veds:BitemporalStorage ;
 
     # Statistics (approximate, grows over time)
@@ -271,10 +271,10 @@ vedsdat:sanctions-to-ofac a void:Linkset ;
 
 ```turtle
 @prefix veds:    <https://veds.example.org/vocab#> .
-@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl:     <http://www.w3.org/2002/07/owl#> .
-@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
-@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs:    <https://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <https://www.w3.org/2002/07/owl#> .
+@prefix xsd:     <https://www.w3.org/2001/XMLSchema#> .
+@prefix skos:    <https://www.w3.org/2004/02/skos/core#> .
 
 # ==============================================================================
 # Core Classes

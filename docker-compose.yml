@@ -103,13 +103,13 @@ services:
       - MIX_ENV=dev
       - PHX_HOST=localhost
       - SECRET_KEY_BASE=dev_secret_key_base_must_be_at_least_64_bytes_long_for_security
-      - XTDB_URL=http://xtdb:3000
+      - XTDB_URL=https://xtdb:3000
       - SURREALDB_URL=ws://surrealdb:8000
       - SURREALDB_USER=root
       - SURREALDB_PASS=veds_dev_password
       - DRAGONFLY_URL=redis://dragonfly:6379
       - DRAGONFLY_PASS=veds_dev_password
-      - OPTIMIZER_URL=http://rust-optimizer:50051
+      - OPTIMIZER_URL=https://rust-optimizer:50051
     depends_on:
       xtdb:
         condition: service_healthy
@@ -129,7 +129,7 @@ services:
     ports:
       - "8080:8080"     # HTTP API
     environment:
-      - XTDB_URL=http://xtdb:3000
+      - XTDB_URL=https://xtdb:3000
       - DRAGONFLY_URL=redis://dragonfly:6379
       - DRAGONFLY_PASS=veds_dev_password
     depends_on:
@@ -150,7 +150,7 @@ services:
       - "8081:8080"     # Genie.jl dashboard
     environment:
       - JULIA_NUM_THREADS=auto
-      - XTDB_URL=http://xtdb:3000
+      - XTDB_URL=https://xtdb:3000
       - SURREALDB_URL=ws://surrealdb:8000
       - DRAGONFLY_URL=redis://dragonfly:6379
     depends_on:

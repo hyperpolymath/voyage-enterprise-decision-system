@@ -85,10 +85,10 @@ services:
       - "50051:50051"
       - "9090:9090"  # Metrics
     environment:
-      SURREALDB_URL: http://surrealdb:8000
+      SURREALDB_URL: https://surrealdb:8000
       DRAGONFLY_URL: redis://dragonfly:6379
       RUST_LOG: info
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: https://otel-collector:4317
     depends_on:
       surrealdb:
         condition: service_healthy
@@ -107,12 +107,12 @@ services:
       - "4000:4000"
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/veds
-      SURREALDB_URL: http://surrealdb:8000
+      SURREALDB_URL: https://surrealdb:8000
       DRAGONFLY_URL: redis://dragonfly:6379
       OPTIMIZER_URL: rust-optimizer:50051
       SECRET_KEY_BASE: development-secret-key-base-change-in-production
       PHX_HOST: localhost
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: https://otel-collector:4317
     depends_on:
       - rust-optimizer
       - dragonfly
@@ -128,9 +128,9 @@ services:
     ports:
       - "8081:8080"
     environment:
-      XTDB_URL: http://xtdb:3000
+      XTDB_URL: https://xtdb:3000
       DRAGONFLY_URL: redis://dragonfly:6379
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: https://otel-collector:4317
     depends_on:
       xtdb:
         condition: service_healthy
@@ -148,7 +148,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      API_URL: http://elixir-api:4000
+      API_URL: https://elixir-api:4000
       DRAGONFLY_URL: redis://dragonfly:6379
     depends_on:
       - elixir-api
