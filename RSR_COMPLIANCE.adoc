@@ -13,27 +13,23 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 |Attribute |Value
 
 |Project |Voyage-Enterprise-Decision-System
-|Primary Language |unknown
-|RSR Tier |N/A
-|Compliance Status |Review Needed
-|Last Updated |2025-12-10
+|Primary Languages |Rust, Elixir, Ada/SPARK, Clojure, Julia
+|RSR Tier |Tier 1 (Rust, Elixir, Ada) + Tier 2 (Clojure, Julia)
+|Compliance Status |Compliant
+|Last Updated |2025-12-17
 |===
 
 == Language Tier Classification
 
 === Tier 1 Languages (Preferred)
-* Rust
-* Elixir
-* Zig
-* Ada
-* Haskell
-* ReScript
+* Rust - Routing optimizer
+* Elixir - API gateway
+* Ada/SPARK - Formal verification
 
 === Tier 2 Languages (Acceptable)
-* Nickel (configuration)
-* Racket (scripting)
-* Guile Scheme (state management)
-* Nix (derivations)
+* Clojure - Constraints engine with XTDB
+* Julia - Visualization dashboards
+* Guile Scheme - State management (META.scm, STATE.scm, ECOSYSTEM.scm)
 
 === Restricted Languages
 * Python - Only allowed in salt/ directories for SaltStack
@@ -46,28 +42,67 @@ This document describes the Rhodium Standard Repository (RSR) compliance status 
 |===
 |Requirement |Status |Notes
 
-|Primary language is Tier 1/2 |✓ |unknown
-|No restricted languages outside exemptions |✓ |
-|.editorconfig present |✓ |
-|.well-known/ directory |✓ |
-|justfile present |✗ |
-|LICENSE.txt (AGPL + Palimpsest) |✓ |
-|Containerfile present |✗ |
-|flake.nix present |✗ |
+|Primary language is Tier 1/2 |✓ |Rust, Elixir, Ada/SPARK (Tier 1), Clojure, Julia (Tier 2)
+|No restricted languages outside exemptions |✓ |Clean
+|.editorconfig present |✓ |Full configuration
+|.well-known/ directory |✓ |security.txt, ai.txt, humans.txt, consent-required.txt, provenance.json
+|justfile present |✓ |Development tasks with nerdctl/podman support
+|LICENSE.txt (AGPL + Palimpsest) |✓ |Dual MIT/AGPL with Palimpsest overlay
+|Containerfile present |✓ |All 5 services have Containerfiles
+|guix.scm present |✓ |Primary package management
+|flake.nix present |✓ |Nix fallback per RSR guidelines
+|SECURITY.md |✓ |RFC 9116 compliant
+|security.txt |✓ |Valid expiry date, encryption key
+|CodeQL scanning |✓ |Weekly + PR triggers
+|Dependabot |✓ |Cargo, Mix, GitHub Actions
+|OSSF Scorecard |✓ |Weekly supply chain assessment
+|===
+
+== Security Scanning
+
+[cols="1,1"]
+|===
+|Tool |Purpose
+
+|CodeQL |Static analysis (all languages)
+|Trivy |Container/filesystem vulnerability scanning
+|cargo-audit |Rust advisory database checks
+|TruffleHog |Secret detection
+|OSSF Scorecard |Supply chain security
+|===
+
+== CI/CD Workflows
+
+[cols="1,2"]
+|===
+|Workflow |Description
+
+|ci.yaml |Build, test, security scan for all services
+|codeql.yml |Advanced CodeQL analysis
+|security-policy.yml |MD5/SHA1, HTTP, secrets enforcement
+|rsr-antipattern.yml |Blocked languages/tools detection
+|npm-bun-blocker.yml |Prevents npm/bun usage
+|container-policy.yml |Enforces Containerfile over Dockerfile
+|guix-nix-policy.yml |Package manager enforcement
+|quality.yml |EditorConfig, permissions, TODOs
+|scorecard.yml |OSSF supply chain security
+|wellknown-enforcement.yml |RFC 9116 validation
 |===
 
 == Exemptions
 
-None
+None required. All components use RSR-compliant technologies.
 
 == Action Items
 
-* Add justfile
-* Add Containerfile
-* Add flake.nix
+* [x] Add justfile
+* [x] Add Containerfiles for all services
+* [x] Add flake.nix (Nix fallback)
+* [x] Configure security.txt with valid expiry
+* [x] Update SECURITY.md from template
 
 == References
 
 * link:https://github.com/hyperpolymath/RSR-template-repo[RSR Template Repository]
-* link:../CONTRIBUTING.adoc[Contributing Guidelines]
-* link:../CODE_OF_CONDUCT.adoc[Code of Conduct]
+* link:CONTRIBUTING.md[Contributing Guidelines]
+* link:CODE_OF_CONDUCT.md[Code of Conduct]

@@ -162,24 +162,35 @@ See [LICENSE](LICENSE) for details.
 
 == Roadmap
 
-=== Phase 1: MVP (Current)
-- [x] Design documentation
-- [ ] Database schemas
-- [ ] Basic routing engine
-- [ ] API skeleton
-- [ ] Constraint DSL
+See link:ROADMAP.adoc[ROADMAP.adoc] for the complete development roadmap.
 
-=== Phase 2: Core Features
-- [ ] Formal verification integration
-- [ ] Real-time tracking
-- [ ] Julia dashboards
+=== Phase 1: Foundation [CURRENT - 35%]
+- [x] RSR compliance & security configuration
+- [x] CI/CD workflows (13 workflows)
+- [x] Service scaffolds (all 5 services)
+- [x] Container specifications (Containerfiles)
+- [x] Package management (guix.scm + flake.nix)
+- [ ] Database schema finalization
+- [ ] Core routing algorithms
+- [ ] API skeleton completion
+
+=== Phase 2: Core Engine
+- [ ] Rust multi-modal routing optimizer
+- [ ] Clojure constraints engine (XTDB)
+- [ ] Elixir Phoenix API gateway
+- [ ] Property-based testing suite
+
+=== Phase 3: Formal Verification
+- [ ] Ada/SPARK constraint proofs
+- [ ] Z3/CVC5 solver integration
+- [ ] Verification CI pipeline
+
+=== Phase 4: Production
+- [ ] Julia visualization dashboards
 - [ ] VoID/SPARQL endpoint
-
-=== Phase 3: Production
 - [ ] Transport API integrations
-- [ ] Carbon accounting
-- [ ] Labor compliance reporting
-- [ ] Kubernetes deployment
+- [ ] Kubernetes deployment (RKE2/K3s)
+- [ ] Observability stack (OpenTelemetry/Grafana)
 
 ---
 

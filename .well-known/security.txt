@@ -1,8 +1,9 @@
 # Security Policy for Voyage-Enterprise-Decision-System
 # https://securitytxt.org/
+# RFC 9116 compliant
 
-Contact: security@hyperpolymath.org
-Expires: {{EXPIRY_DATE}}
+Contact: mailto:security@hyperpolymath.org
+Expires: 2026-12-17T23:59:59.000Z
 Encryption: https://hyperpolymath.org/gpg/security.asc
 Preferred-Languages: en, nl
 Canonical: https://github.com/hyperpolymath/Voyage-Enterprise-Decision-System/.well-known/security.txt
