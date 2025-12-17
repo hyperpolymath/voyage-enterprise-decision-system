@@ -33,13 +33,13 @@ seed:
 seed-custom surrealdb_url dragonfly_url:
     julia --project=src/julia-viz scripts/seed_data.jl --surrealdb-url {{surrealdb_url}} --dragonfly-url {{dragonfly_url}}
 
-# Start Docker containers for development
+# Start containers for development (nerdctl preferred, podman fallback)
 containers-up:
-    docker-compose up -d
+    nerdctl compose -f nerdctl-compose.yaml up -d || podman-compose up -d
 
-# Stop Docker containers
+# Stop containers
 containers-down:
-    docker-compose down
+    nerdctl compose -f nerdctl-compose.yaml down || podman-compose down
 
 # Clean build artifacts
 clean:
