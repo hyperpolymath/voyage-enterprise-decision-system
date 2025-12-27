@@ -8,8 +8,8 @@ project := "Voyage-Enterprise-Decision-System"
 default:
     @just --list --unsorted
 
-# Build all components
-build: build-rust build-deno build-julia
+# Build all MVP components
+build: build-rust build-deno
 
 # Build Rust optimizer
 build-rust:
@@ -83,20 +83,20 @@ serve-api-dev:
 serve-optimizer:
     cd src/rust-routing && cargo run --release
 
-# Initialize databases with schemas
+# Initialize databases with schemas (requires SURREALDB_USER and SURREALDB_PASS)
 db-init:
     @echo "Initializing SurrealDB schema..."
     curl -X POST -H "Accept: application/json" -H "NS: veds" -H "DB: production" \
-        -u "root:veds_dev_password" \
+        -u "${SURREALDB_USER:?SURREALDB_USER required}:${SURREALDB_PASS:?SURREALDB_PASS required}" \
         --data-binary @db/schemas/surrealdb.surql \
         http://localhost:8000/sql
     @echo "Database initialized."
 
-# Seed databases with sample data
+# Seed databases with sample data (requires SURREALDB_USER and SURREALDB_PASS)
 db-seed:
     @echo "Seeding SurrealDB with transport network..."
     curl -X POST -H "Accept: application/json" -H "NS: veds" -H "DB: production" \
-        -u "root:veds_dev_password" \
+        -u "${SURREALDB_USER:?SURREALDB_USER required}:${SURREALDB_PASS:?SURREALDB_PASS required}" \
         --data-binary @db/seeds/transport_network.surql \
         http://localhost:8000/sql
     @echo "Database seeded."
@@ -117,12 +117,12 @@ dev: containers-up
     @echo "Starting API server..."
     just serve-api-dev
 
-# Check service health
+# Check service health (requires env vars)
 health:
     @echo "=== Service Health ==="
     @echo "SurrealDB:" && curl -s http://localhost:8000/health || echo "DOWN"
     @echo "XTDB:" && curl -s http://localhost:3000/status || echo "DOWN"
-    @echo "Dragonfly:" && redis-cli -a veds_dev_password ping || echo "DOWN"
+    @echo "Dragonfly:" && redis-cli -a "${DRAGONFLY_PASS:?DRAGONFLY_PASS required}" ping 2>/dev/null || echo "DOWN"
     @echo "API:" && curl -s http://localhost:4000/health || echo "DOWN"
     @echo "Optimizer:" && curl -s http://localhost:8090/health || echo "DOWN"
 
