@@ -1,16 +1,16 @@
 version: '3.8'
 
 # VEDS MVP Development Environment
-# Narrowed stack: SurrealDB + Dragonfly + Rust + Deno
+# Stack: SurrealDB + XTDB + Dragonfly + Rust + Deno
 # Start with: docker-compose up -d
+# IMPORTANT: Copy .env.example to .env and set all required variables
 
 services:
   # ===========================================================================
-  # MVP CORE: 2 Databases
+  # MVP CORE: 3 Databases
   # ===========================================================================
 
-  # SurrealDB - Primary database (graph + document + SQL)
-  # Handles: transport network, shipments, routes, constraints, audit
+  # SurrealDB - Graph/Document store for transport network
   surrealdb:
     image: surrealdb/surrealdb:v1.5.4
     container_name: veds-surrealdb
@@ -18,7 +18,7 @@ services:
       - "8000:8000"
     volumes:
       - surreal_data:/data
-    command: start --log info --user root --pass veds_dev_password file:/data/veds.db
+    command: start --log info --user ${SURREALDB_USER:?SURREALDB_USER required} --pass ${SURREALDB_PASS:?SURREALDB_PASS required} file:/data/veds.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -27,8 +27,26 @@ services:
     networks:
       - veds-network
 
+  # XTDB - Bitemporal database for constraints, decisions, audit
+  xtdb:
+    image: ghcr.io/xtdb/xtdb:2.0.0-beta7
+    container_name: veds-xtdb
+    ports:
+      - "3000:3000"
+    volumes:
+      - xtdb_data:/var/lib/xtdb
+      - ./config/xtdb.yaml:/etc/xtdb.yaml:ro
+    environment:
+      - XTDB_NODE_DIR=/var/lib/xtdb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veds-network
+
   # Dragonfly - Redis-compatible cache for hot data
-  # Handles: real-time positions, rate quotes, session data
   dragonfly:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.15.1
     container_name: veds-dragonfly
@@ -38,9 +56,9 @@ services:
       - dragonfly_data:/data
     ulimits:
       memlock: -1
-    command: dragonfly --requirepass veds_dev_password --maxmemory 512mb
+    command: dragonfly --requirepass ${DRAGONFLY_PASS:?DRAGONFLY_PASS required} --maxmemory 512mb
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "veds_dev_password", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${DRAGONFLY_PASS}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,17 +79,22 @@ services:
       - "50051:50051"   # gRPC
       - "8090:8090"     # HTTP metrics
     environment:
-      - RUST_LOG=info
+      - RUST_LOG=${RUST_LOG:-info}
       - SURREALDB_URL=ws://surrealdb:8000
-      - SURREALDB_USER=root
-      - SURREALDB_PASS=veds_dev_password
+      - SURREALDB_USER=${SURREALDB_USER:?SURREALDB_USER required}
+      - SURREALDB_PASS=${SURREALDB_PASS:?SURREALDB_PASS required}
       - DRAGONFLY_URL=redis://dragonfly:6379
-      - DRAGONFLY_PASS=veds_dev_password
+      - DRAGONFLY_PASS=${DRAGONFLY_PASS:?DRAGONFLY_PASS required}
     depends_on:
       surrealdb:
         condition: service_healthy
       dragonfly:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - veds-network
 
@@ -87,13 +110,16 @@ services:
       - PORT=4000
       - HOST=0.0.0.0
       - SURREALDB_URL=ws://surrealdb:8000
-      - SURREALDB_USER=root
-      - SURREALDB_PASS=veds_dev_password
+      - SURREALDB_USER=${SURREALDB_USER:?SURREALDB_USER required}
+      - SURREALDB_PASS=${SURREALDB_PASS:?SURREALDB_PASS required}
+      - XTDB_URL=http://xtdb:3000
       - DRAGONFLY_URL=redis://dragonfly:6379
-      - DRAGONFLY_PASS=veds_dev_password
-      - OPTIMIZER_URL=http://rust-optimizer:50051
+      - DRAGONFLY_PASS=${DRAGONFLY_PASS:?DRAGONFLY_PASS required}
+      - OPTIMIZER_URL=http://rust-optimizer:8090
     depends_on:
       surrealdb:
+        condition: service_healthy
+      xtdb:
         condition: service_healthy
       dragonfly:
         condition: service_healthy
@@ -109,22 +135,6 @@ services:
   # DEFERRED TO V2 (profiles)
   # ===========================================================================
 
-  # XTDB - Bitemporal database (deferred - using SurrealDB valid_from/until)
-  xtdb:
-    image: ghcr.io/xtdb/xtdb:2.0.0-beta7
-    container_name: veds-xtdb
-    ports:
-      - "3000:3000"
-    volumes:
-      - xtdb_data:/var/lib/xtdb
-      - ./config/xtdb.yaml:/etc/xtdb.yaml:ro
-    environment:
-      - XTDB_NODE_DIR=/var/lib/xtdb
-    profiles:
-      - v2
-    networks:
-      - veds-network
-
   # Julia Analytics (deferred - resource intensive)
   julia-viz:
     build:
@@ -136,7 +146,11 @@ services:
     environment:
       - JULIA_NUM_THREADS=auto
       - SURREALDB_URL=ws://surrealdb:8000
+      - SURREALDB_USER=${SURREALDB_USER}
+      - SURREALDB_PASS=${SURREALDB_PASS}
+      - XTDB_URL=http://xtdb:3000
       - DRAGONFLY_URL=redis://dragonfly:6379
+      - DRAGONFLY_PASS=${DRAGONFLY_PASS}
     profiles:
       - v2
     networks:
