@@ -1,33 +1,16 @@
 version: '3.8'
 
-# VEDS Development Environment
+# VEDS MVP Development Environment
+# Narrowed stack: SurrealDB + Dragonfly + Rust + Deno
 # Start with: docker-compose up -d
 
 services:
   # ===========================================================================
-  # DATABASES
+  # MVP CORE: 2 Databases
   # ===========================================================================
 
-  # XTDB - Bitemporal database for constraints, decisions, audit
-  xtdb:
-    image: ghcr.io/xtdb/xtdb:2.0.0-beta7
-    container_name: veds-xtdb
-    ports:
-      - "3000:3000"    # HTTP API
-    volumes:
-      - xtdb_data:/var/lib/xtdb
-      - ./config/xtdb.yaml:/etc/xtdb.yaml:ro
-    environment:
-      - XTDB_NODE_DIR=/var/lib/xtdb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - veds-network
-
-  # SurrealDB - Graph/Document store for transport network
+  # SurrealDB - Primary database (graph + document + SQL)
+  # Handles: transport network, shipments, routes, constraints, audit
   surrealdb:
     image: surrealdb/surrealdb:v1.5.4
     container_name: veds-surrealdb
@@ -44,7 +27,8 @@ services:
     networks:
       - veds-network
 
-  # Dragonfly - Redis-compatible cache
+  # Dragonfly - Redis-compatible cache for hot data
+  # Handles: real-time positions, rate quotes, session data
   dragonfly:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.15.1
     container_name: veds-dragonfly
@@ -54,7 +38,7 @@ services:
       - dragonfly_data:/data
     ulimits:
       memlock: -1
-    command: dragonfly --requirepass veds_dev_password --maxmemory 1gb
+    command: dragonfly --requirepass veds_dev_password --maxmemory 512mb
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "veds_dev_password", "ping"]
       interval: 10s
@@ -64,10 +48,10 @@ services:
       - veds-network
 
   # ===========================================================================
-  # APPLICATION SERVICES
+  # MVP CORE: 2 Application Services
   # ===========================================================================
 
-  # Rust Route Optimizer
+  # Rust Route Optimizer (gRPC + metrics)
   rust-optimizer:
     build:
       context: ./src/rust-routing
@@ -91,18 +75,17 @@ services:
     networks:
       - veds-network
 
-  # Deno API Gateway (MVP spine - replaces Elixir/Phoenix per language policy)
+  # Deno API Gateway (REST)
   deno-api:
     build:
       context: ./src/deno-api
       dockerfile: Dockerfile
     container_name: veds-api
     ports:
-      - "4000:4000"     # HTTP API
+      - "4000:4000"
     environment:
       - PORT=4000
       - HOST=0.0.0.0
-      - XTDB_URL=http://xtdb:3000
       - SURREALDB_URL=ws://surrealdb:8000
       - SURREALDB_USER=root
       - SURREALDB_PASS=veds_dev_password
@@ -110,8 +93,6 @@ services:
       - DRAGONFLY_PASS=veds_dev_password
       - OPTIMIZER_URL=http://rust-optimizer:50051
     depends_on:
-      xtdb:
-        condition: service_healthy
       surrealdb:
         condition: service_healthy
       dragonfly:
@@ -124,51 +105,44 @@ services:
     networks:
       - veds-network
 
-  # Legacy: Elixir/Phoenix API Gateway (disabled - replaced by Deno API)
-  # elixir-api:
-  #   build:
-  #     context: ./src/elixir-api
-  #     dockerfile: Dockerfile
-  #   container_name: veds-api-legacy
-  #   profiles:
-  #     - legacy
+  # ===========================================================================
+  # DEFERRED TO V2 (profiles)
+  # ===========================================================================
 
-  # Legacy: Clojure Constraint Engine (disabled - constraints now in ReScript DSL)
-  # clojure-constraints:
-  #   build:
-  #     context: ./src/clojure-constraints
-  #     dockerfile: Dockerfile
-  #   container_name: veds-constraints-legacy
-  #   profiles:
-  #     - legacy
+  # XTDB - Bitemporal database (deferred - using SurrealDB valid_from/until)
+  xtdb:
+    image: ghcr.io/xtdb/xtdb:2.0.0-beta7
+    container_name: veds-xtdb
+    ports:
+      - "3000:3000"
+    volumes:
+      - xtdb_data:/var/lib/xtdb
+      - ./config/xtdb.yaml:/etc/xtdb.yaml:ro
+    environment:
+      - XTDB_NODE_DIR=/var/lib/xtdb
+    profiles:
+      - v2
+    networks:
+      - veds-network
 
-  # Julia Analytics (optional - resource intensive)
+  # Julia Analytics (deferred - resource intensive)
   julia-viz:
     build:
       context: ./src/julia-viz
       dockerfile: Dockerfile
     container_name: veds-viz
     ports:
-      - "8081:8080"     # Genie.jl dashboard
+      - "8081:8080"
     environment:
       - JULIA_NUM_THREADS=auto
-      - XTDB_URL=https://xtdb:3000
       - SURREALDB_URL=ws://surrealdb:8000
       - DRAGONFLY_URL=redis://dragonfly:6379
-    depends_on:
-      - xtdb
-      - surrealdb
-      - dragonfly
     profiles:
-      - viz   # Only start with: docker-compose --profile viz up
+      - v2
     networks:
       - veds-network
 
-  # ===========================================================================
-  # DEVELOPMENT TOOLS
-  # ===========================================================================
-
-  # Database admin UI (optional)
+  # Database admin UI (dev tools)
   adminer:
     image: adminer:latest
     container_name: veds-adminer
@@ -184,6 +158,6 @@ networks:
     driver: bridge
 
 volumes:
-  xtdb_data:
   surreal_data:
   dragonfly_data:
+  xtdb_data:
