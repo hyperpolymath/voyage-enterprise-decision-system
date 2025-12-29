@@ -1,5 +1,7 @@
 = VEDS - Voyage Enterprise Decision System
 
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
+
 *A multimodal transport optimization platform with formal verification*
 
 Compete with Infor. Built for cooperative economics.
@@ -73,19 +75,27 @@ Unlike traditional TMS platforms, VEDS provides *mathematically proven* guarante
 
 ```bash
 = Clone repository
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 git clone https://github.com/your-org/veds.git
 cd veds
 
 = Start databases
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 docker-compose up -d xtdb surrealdb dragonfly
 
 = Run services (in separate terminals)
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 cd src/rust-routing && cargo run
 cd src/elixir-api && mix phx.server
 cd src/clojure-constraints && clj -M:run
 cd src/julia-viz && julia --project=. -e "using VEDS; VEDS.start_dashboard()"
 
 = Access
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 open http://localhost:4000  # API + Dashboard
 open http://localhost:8081  # Analytics
 ```
@@ -112,6 +122,8 @@ open http://localhost:8081  # Analytics
 
 ```bash
 = Create shipment
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 curl -X POST http://localhost:4000/api/v1/shipments \
   -H "Content-Type: application/json" \
   -d '{
@@ -126,9 +138,13 @@ curl -X POST http://localhost:4000/api/v1/shipments \
   }'
 
 = Get optimized routes
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 curl http://localhost:4000/api/v1/shipments/{id}/routes
 
 = Track shipment (WebSocket)
+
+image:https://img.shields.io/badge/license-AGPL--3.0-blue.svg[AGPL-3.0,link="https://www.gnu.org/licenses/agpl-3.0"] image:https://img.shields.io/badge/philosophy-Palimpsest-purple.svg[Palimpsest,link="https://github.com/hyperpolymath/palimpsest-licence"]
 wscat -c ws://localhost:4000/socket/tracking?shipment_id={id}
 ```
 
