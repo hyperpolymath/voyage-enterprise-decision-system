@@ -268,7 +268,7 @@ See link:CONTRIBUTING.md[CONTRIBUTING.md] for detailed guidelines.
 Dual-licensed under your choice of:
 
 * *Palimpsest-MPL-1.0 License* - Maximum permissiveness
-* *AGPL-3.0* - Copyleft protection
+* *PMPL-1.0* - Copyleft protection
 
 Plus the *Palimpsest Philosophical Overlay* encouraging:
 
