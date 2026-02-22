@@ -296,3 +296,8 @@ See link:LICENSE[LICENSE] for details.
 '''
 
 _Built with cooperative economics in mind. Workers deserve fair treatment._
+
+
+== Architecture
+
+See link:TOPOLOGY.md[TOPOLOGY.md] for a visual architecture map and completion dashboard.
