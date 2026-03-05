@@ -136,3 +136,8 @@ test-all: test test-rust
 # Generate API client from protobuf
 proto-gen:
     cd src/rust-routing && cargo build
+
+# [AUTO-GENERATED] Multi-arch / RISC-V target
+build-riscv:
+	@echo "Building for RISC-V..."
+	cross build --target riscv64gc-unknown-linux-gnu
