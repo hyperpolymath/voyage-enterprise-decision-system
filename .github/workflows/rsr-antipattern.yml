@@ -5,6 +5,8 @@
 # Enforces: No TypeScript, No Go, No Python (except SaltStack), No npm
 # Allows: ReScript, Deno, WASM, Rust, OCaml, Haskell, Guile/Scheme
 
+permissions: read-all
+
 name: RSR Anti-Pattern Check
 
 on:
