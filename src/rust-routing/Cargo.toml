@@ -2,9 +2,9 @@
 name = "veds-optimizer"
 version = "0.1.0"
 edition = "2021"
-authors = ["Jonathan D.A. Jewell", "VEDS Team"]
+authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
 description = "High-performance multimodal route optimizer for VEDS"
-license = "MIT OR AGPL-3.0"
+license = "PMPL-1.0-or-later"
 
 [dependencies]
 # Async runtime

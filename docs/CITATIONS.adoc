@@ -6,29 +6,29 @@
 [source,bibtex]
 ----
 @software{voyage-enterprise-decision-system_2025,
-  author = {Polymath, Hyper},
+  author = {Jewell, Jonathan D.A.},
   title = {Voyage-Enterprise-Decision-System},
   year = {2025},
-  url = {https://github.com/hyperpolymath/Voyage-Enterprise-Decision-System},
-  license = {AGPL-3.0-or-later}
+  url = {https://github.com/hyperpolymath/voyage-enterprise-decision-system},
+  license = {PMPL-1.0-or-later}
 }
 ----
 
 == Harvard Style
 
-Polymath, H. (2025) _Voyage-Enterprise-Decision-System_ [Computer software]. Available at: https://github.com/hyperpolymath/Voyage-Enterprise-Decision-System
+Jewell, J.D.A. (2025) _Voyage-Enterprise-Decision-System_ [Computer software]. Available at: https://github.com/hyperpolymath/voyage-enterprise-decision-system
 
 == OSCOLA
 
-Hyper Polymath, 'Voyage-Enterprise-Decision-System' (2025) <https://github.com/hyperpolymath/Voyage-Enterprise-Decision-System>
+Jonathan D.A. Jewell, 'Voyage-Enterprise-Decision-System' (2025) <https://github.com/hyperpolymath/voyage-enterprise-decision-system>
 
 == MLA
 
-Polymath, Hyper. "Voyage-Enterprise-Decision-System." 2025, github.com/hyperpolymath/Voyage-Enterprise-Decision-System.
+Jewell, Jonathan D.A. "Voyage-Enterprise-Decision-System." 2025, github.com/hyperpolymath/voyage-enterprise-decision-system.
 
 == APA 7
 
-Polymath, H. (2025). _Voyage-Enterprise-Decision-System_ [Computer software]. GitHub. https://github.com/hyperpolymath/Voyage-Enterprise-Decision-System
+Jewell, J.D.A. (2025). _Voyage-Enterprise-Decision-System_ [Computer software]. GitHub. https://github.com/hyperpolymath/voyage-enterprise-decision-system
 
 == See Also
 
