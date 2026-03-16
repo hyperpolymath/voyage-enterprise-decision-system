@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Clade declaration — part of the gv-clade-index registry
+# See: https://github.com/hyperpolymath/gv-clade-index
+
+[identity]
+uuid = "dc4a3d93-61b1-56cc-80cf-3574085a3ad3"
+primary-forge = "github"
+primary-owner = "hyperpolymath"
+canonical-name = "voyage-enterprise-decision-system"
+prefixed-name = "ap-voyage-enterprise-decision-system"
+
+[clade]
+primary = "ap"
+secondary = []
+assigned = "2026-03-16"
+rationale = ""
+
+[forges]
+github = "hyperpolymath/voyage-enterprise-decision-system"
+gitlab = "hyperpolymath/voyage-enterprise-decision-system"
+bitbucket = "hyperpolymath/voyage-enterprise-decision-system"
+
+[lineage]
+type = "standalone"
+parent = "Enterprise decision support system"
+born = "2026-03-16"
