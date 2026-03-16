@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! Constraint Engine
 //!
 //! Evaluates hard and soft constraints on routes.

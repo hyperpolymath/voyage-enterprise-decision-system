@@ -1,3 +1,4 @@
+-- SPDX-License-Identifier: PMPL-1.0-or-later
 ||| Memory Layout Proofs — ABI Foundation.
 |||
 ||| This module provides the formal proofs required to ensure that 

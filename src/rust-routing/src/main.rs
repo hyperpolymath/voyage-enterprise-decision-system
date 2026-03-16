@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! VEDS Route Optimizer
 //!
 //! High-performance multimodal transport route optimization engine.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! Database Connectivity
 //!
 //! Connects to SurrealDB for transport graph data.

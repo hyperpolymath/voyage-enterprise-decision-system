@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Compile protobuf definitions for gRPC
     tonic_build::configure()

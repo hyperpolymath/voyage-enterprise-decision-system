@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
 //! Transport Network Graph
 //!
 //! In-memory graph representation of the multimodal transport network.
