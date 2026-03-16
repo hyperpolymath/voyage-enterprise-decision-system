@@ -4,6 +4,7 @@
 //! High-performance multimodal transport route optimization engine.
 //! Finds optimal paths across maritime, rail, road, and air networks.
 
+#![forbid(unsafe_code)]
 mod graph;
 mod optimizer;
 mod constraints;
