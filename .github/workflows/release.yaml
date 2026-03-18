@@ -80,4 +80,5 @@ jobs:
           git add deploy/
           git commit -m "release: update manifests for v${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
-permissions: read-all
+permissions:
+  contents: read
