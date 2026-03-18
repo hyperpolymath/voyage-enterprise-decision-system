@@ -1,14 +1,11 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
 name: Release
-
 on:
   push:
     tags:
       - 'v*'
-
 env:
   REGISTRY: ghcr.io
-
 jobs:
   release:
     name: Create Release
@@ -18,21 +15,17 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
       # Build and push all service images with version tag
       - name: Build rust-optimizer
         uses: docker/build-push-action@v6
@@ -42,7 +35,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-rust-optimizer:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-rust-optimizer:latest
-
       - name: Build elixir-api
         uses: docker/build-push-action@v6
         with:
@@ -51,7 +43,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-elixir-api:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-elixir-api:latest
-
       - name: Build clojure-constraints
         uses: docker/build-push-action@v6
         with:
@@ -60,7 +51,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-clojure-constraints:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-clojure-constraints:latest
-
       - name: Build julia-viz
         uses: docker/build-push-action@v6
         with:
@@ -69,13 +59,11 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-julia-viz:${{ steps.version.outputs.VERSION }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/veds-julia-viz:latest
-
       # Update production kustomization
       - name: Update production image tags
         run: |
           cd deploy/rke2/base
           sed -i "s/newTag:.*/newTag: v${{ steps.version.outputs.VERSION }}/" kustomization.yaml
-
       - name: Create Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
         with:
@@ -85,7 +73,6 @@ jobs:
             deploy/rke2/prod/*.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Commit updated manifests
         run: |
           git config user.name "GitHub Actions"
@@ -93,3 +80,4 @@ jobs:
           git add deploy/
           git commit -m "release: update manifests for v${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
+permissions: read-all
