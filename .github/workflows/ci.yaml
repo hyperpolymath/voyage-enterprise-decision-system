@@ -308,4 +308,5 @@ jobs:
           git add deploy/
           git commit -m "ci: update image tags to ${{ github.sha }}" || exit 0
           git push
-permissions: read-all
+permissions:
+  contents: read
