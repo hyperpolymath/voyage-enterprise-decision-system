@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT OR AGPL-3.0
+// SPDX-License-Identifier: PMPL-1.0-or-later
 // VEDS API Types - Domain Model
 
 // Transport modes

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT OR AGPL-3.0
+// SPDX-License-Identifier: PMPL-1.0-or-later
 // VEDS Constraint DSL - Declarative constraint definitions
 
 open Types

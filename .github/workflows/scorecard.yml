@@ -27,6 +27,6 @@ jobs:
           results_format: sarif
       
       - name: Upload results
-        uses: github/codeql-action/upload-sarif@v4.31.10
+        uses: github/codeql-action/upload-sarif@6624720a57d4c312633c7b953db2f2da5bcb4c3a # v3.31.10
         with:
           sarif_file: results.sarif
