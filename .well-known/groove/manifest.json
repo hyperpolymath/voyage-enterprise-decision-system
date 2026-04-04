@@ -4,12 +4,12 @@
     "team"
   ],
   "capabilities": {
-    "primary": {
-      "description": "TODO: describe this service's primary capability",
+    "cli": {
+      "description": "CLI decision engine optimising cargo movement across maritime, rail, road, and air simultaneously.",
       "panel_compatible": true,
       "protocol": "cli",
       "requires_auth": false,
-      "type": "custom"
+      "type": "cli"
     }
   },
   "consumes": [],
