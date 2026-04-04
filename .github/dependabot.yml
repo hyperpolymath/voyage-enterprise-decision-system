@@ -1,13 +1,6 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
 version: 2
 updates:
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -16,7 +9,3 @@ updates:
       actions:
         patterns:
           - "*"
-  - package-ecosystem: "mix"
-    directory: "/"
-    schedule:
-      interval: "weekly"
