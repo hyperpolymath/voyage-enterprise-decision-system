@@ -2,6 +2,8 @@
 set shell := ["bash", "-uc"]
 set dotenv-load := true
 
+import? "contractile.just"
+
 project := "Voyage-Enterprise-Decision-System"
 
 # Show all recipes
