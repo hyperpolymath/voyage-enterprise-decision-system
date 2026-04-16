@@ -176,9 +176,9 @@ async fn main() -> Result<()> {
 
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", http_port))
             .await
-            .unwrap();
+            .expect("TODO: handle error");
         info!("HTTP server listening on port {}", http_port);
-        axum::serve(listener, app).await.unwrap();
+        axum::serve(listener, app).await.expect("TODO: handle error");
     });
 
     // Start gRPC server
@@ -287,8 +287,8 @@ async fn metrics_handler() -> String {
     let encoder = prometheus::TextEncoder::new();
     let metric_families = prometheus::gather();
     let mut buffer = Vec::new();
-    encoder.encode(&metric_families, &mut buffer).unwrap();
-    String::from_utf8(buffer).unwrap()
+    encoder.encode(&metric_families, &mut buffer).expect("TODO: handle error");
+    String::from_utf8(buffer).expect("TODO: handle error")
 }
 
 async fn optimize_handler(
