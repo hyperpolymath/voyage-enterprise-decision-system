@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# Stapeln service definition for voyage-enterprise-decision-system (VEDS)
+# Stack: SurrealDB + XTDB + Dragonfly + Rust optimizer + Deno API
+# Optional v2 services: julia-viz (analytics), adminer (dev tooling)
+#
+# Usage:
+#   podman-compose -f selur-compose.toml up -d        # core services
+#   podman-compose -f selur-compose.toml --profile v2 up -d    # + julia-viz
+#   just stack-up
+
+[project]
+name = "voyage-enterprise-decision-system"
+
+[services.surrealdb]
+image = "surrealdb/surrealdb:v1.5.4"
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["8000:8000"]
+volumes = ["surreal_data:/data"]
+command = "start --log info --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:/data/veds.db"
+healthcheck = { test = ["CMD", "curl", "-f", "http://localhost:8000/health"], interval = "10s", timeout = "5s", retries = 5 }
+
+[services.xtdb]
+image = "ghcr.io/xtdb/xtdb:2.0.0-beta7"
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["3000:3000"]
+environment = { XTDB_NODE_DIR = "/var/lib/xtdb" }
+volumes = [
+  "xtdb_data:/var/lib/xtdb",
+  "./config/xtdb.yaml:/etc/xtdb.yaml:ro",
+]
+healthcheck = { test = ["CMD", "curl", "-f", "http://localhost:3000/status"], interval = "10s", timeout = "5s", retries = 5 }
+
+[services.dragonfly]
+image = "docker.dragonflydb.io/dragonflydb/dragonfly:v1.15.1"
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["6379:6379"]
+volumes = ["dragonfly_data:/data"]
+command = "dragonfly --requirepass ${DRAGONFLY_PASS} --maxmemory 512mb"
+healthcheck = { test = ["CMD", "redis-cli", "-a", "${DRAGONFLY_PASS}", "ping"], interval = "10s", timeout = "5s", retries = 5 }
+
+[services.rust-optimizer]
+build = { context = "./src/rust-routing", dockerfile = "Dockerfile" }
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["50051:50051", "8090:8090"]
+environment = { RUST_LOG = "${RUST_LOG:-info}", SURREALDB_URL = "ws://surrealdb:8000", SURREALDB_USER = "${SURREALDB_USER}", SURREALDB_PASS = "${SURREALDB_PASS}", DRAGONFLY_URL = "redis://dragonfly:6379", DRAGONFLY_PASS = "${DRAGONFLY_PASS}" }
+healthcheck = { test = ["CMD", "curl", "-f", "http://localhost:8090/health"], interval = "10s", timeout = "5s", retries = 5 }
+
+[services.deno-api]
+build = { context = "./src/deno-api", dockerfile = "Dockerfile" }
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["4000:4000"]
+environment = { PORT = "4000", HOST = "0.0.0.0", SURREALDB_URL = "ws://surrealdb:8000", SURREALDB_USER = "${SURREALDB_USER}", SURREALDB_PASS = "${SURREALDB_PASS}", XTDB_URL = "http://xtdb:3000", DRAGONFLY_URL = "redis://dragonfly:6379", DRAGONFLY_PASS = "${DRAGONFLY_PASS}", OPTIMIZER_URL = "http://rust-optimizer:8090" }
+healthcheck = { test = ["CMD", "curl", "-f", "http://localhost:4000/health"], interval = "10s", timeout = "5s", retries = 5 }
+
+# Optional v2 service: resource-intensive analytics. Start with --profile v2
+[services.julia-viz]
+build = { context = "./src/julia-viz", dockerfile = "Dockerfile" }
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["8081:8080"]
+environment = { JULIA_NUM_THREADS = "auto", SURREALDB_URL = "ws://surrealdb:8000", SURREALDB_USER = "${SURREALDB_USER}", SURREALDB_PASS = "${SURREALDB_PASS}", XTDB_URL = "http://xtdb:3000", DRAGONFLY_URL = "redis://dragonfly:6379", DRAGONFLY_PASS = "${DRAGONFLY_PASS}" }
+profiles = ["v2"]
+
+# Optional dev tooling. Start with --profile tools
+[services.adminer]
+image = "adminer:latest"
+restart = "unless-stopped"
+networks = ["veds-network"]
+ports = ["8082:8080"]
+profiles = ["tools"]
+
+[volumes]
+surreal_data = {}
+dragonfly_data = {}
+xtdb_data = {}
+
+[networks]
+veds-network = { driver = "bridge" }
