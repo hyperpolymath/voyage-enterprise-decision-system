@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: PMPL-1.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Template: QUICKSTART-USER.adoc — 5-minute path to working software
 // Replace voyage-enterprise-decision-system, Voyage Enterprise Decision System — See README.adoc for details., just run, Voyage Enterprise Decision System started successfully. with actuals
 = voyage-enterprise-decision-system — Quick Start for Users

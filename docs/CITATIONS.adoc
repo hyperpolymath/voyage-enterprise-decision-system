@@ -10,7 +10,7 @@
   title = {Voyage-Enterprise-Decision-System},
   year = {2025},
   url = {https://github.com/hyperpolymath/voyage-enterprise-decision-system},
-  license = {PMPL-1.0-or-later}
+  license = {MPL-2.0}
 }
 ----
 

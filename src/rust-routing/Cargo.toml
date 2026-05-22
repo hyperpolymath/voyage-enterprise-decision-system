@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
 description = "High-performance multimodal route optimizer for VEDS"
-license = "PMPL-1.0-or-later"
+license = "MPL-2.0"
 
 [dependencies]
 # Async runtime
