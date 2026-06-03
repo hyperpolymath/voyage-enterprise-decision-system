@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = VEDS - Voyage Enterprise Decision System
+image:https://img.shields.io/badge/OpenSSF-Best_Practices-green?logo=openssourcesecurity[OpenSSF Best Practices,link="https://www.bestpractices.dev/en/projects/new?repo_url=https://github.com/hyperpolymath/voyage-enterprise-decision-system"]
+
+image:https://img.shields.io/badge/License-MPL_2.0-blue.svg[License: MPL-2.0,link="https://opensource.org/licenses/MPL-2.0"]
+
 :toc: macro
 :toclevels: 3
 :toc-title: Contents
@@ -265,19 +270,9 @@ See link:CONTRIBUTING.md[CONTRIBUTING.md] for detailed guidelines.
 
 == License
 
-Dual-licensed under your choice of:
+This project is licensed under the Mozilla Public License, v. 2.0. See the `LICENSE` file for details.
 
-* *Palimpsest-MPL-1.0 License* - Maximum permissiveness
-* *PMPL-1.0* - Copyleft protection
-
-Plus the *Palimpsest Philosophical Overlay* encouraging:
-
-* Cooperative economics
-* Environmental responsibility
-* Knowledge sharing
-* Worker solidarity
-
-See link:LICENSE[LICENSE] for details.
+SPDX-License-Identifier: MPL-2.0
 
 == Credits
 
