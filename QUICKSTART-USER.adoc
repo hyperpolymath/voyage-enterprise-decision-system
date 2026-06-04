@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 // Template: QUICKSTART-USER.adoc — 5-minute path to working software
 // Replace voyage-enterprise-decision-system, Voyage Enterprise Decision System — See README.adoc for details., just run, Voyage Enterprise Decision System started successfully. with actuals
 = voyage-enterprise-decision-system — Quick Start for Users

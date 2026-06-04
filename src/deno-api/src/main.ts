@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT OR AGPL-3.0
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 // VEDS API - Deno HTTP Server Entry Point
 
 const VERSION = '0.1.0';

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 //! Route Optimizer
 //!
 //! Multi-objective optimization for finding optimal multimodal routes.
