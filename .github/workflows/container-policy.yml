@@ -3,7 +3,16 @@ permissions:
   contents: read
 
 name: Container Policy
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# Estate guardrail: scope push to default branches so a PR fires once (not
+# push+PR), and cancel superseded runs. Safe — read-only PR-triggered check.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
