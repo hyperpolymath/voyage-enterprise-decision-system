@@ -1,4 +1,4 @@
-;; SPDX-License-Identifier: MIT OR AGPL-3.0
+;; SPDX-License-Identifier: MPL-2.0 OR AGPL-3.0
 ;; VEDS XTDB Schema Definitions
 ;; Bitemporal data model for constraints, decisions, and audit trail
 

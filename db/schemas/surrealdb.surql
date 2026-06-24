@@ -1,4 +1,4 @@
--- SPDX-License-Identifier: MIT OR AGPL-3.0
+-- SPDX-License-Identifier: MPL-2.0 OR AGPL-3.0
 -- VEDS SurrealDB Schema
 -- Transport Network Domain Model
 
