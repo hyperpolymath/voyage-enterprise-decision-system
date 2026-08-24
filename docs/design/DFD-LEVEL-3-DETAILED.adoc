@@ -1,21 +1,18 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Data Flow Diagram - Level 3 (Detailed Flows)
+== VEDS Data Flow Diagram - Level 3 (Detailed Flows)
 
-## Overview
+=== Overview
 
-Level 3 provides the most granular view of data flows, focusing on critical sub-processes.
-This document details the hot paths and complex interactions.
+Level 3 provides the most granular view of data flows, focusing on
+critical sub-processes. This document details the hot paths and complex
+interactions.
 
----
+'''''
 
-## 3.0 ROUTE OPTIMIZER - Detailed (Hot Path Critical)
+=== 3.0 ROUTE OPTIMIZER - Detailed (Hot Path Critical)
 
-### 3.3 Multi-Objective Scorer - Detailed
+==== 3.3 Multi-Objective Scorer - Detailed
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                 3.3 MULTI-OBJECTIVE SCORER (DETAILED)                           │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -114,11 +111,11 @@ This document details the hot paths and complex interactions.
          │ Vec<ScoredPath> with pareto_rank
          ▼
        TO 3.4 CONSTRAINT CHECKER
-```
+....
 
-### 3.4 Constraint Checker - Hot Path Detail
+==== 3.4 Constraint Checker - Hot Path Detail
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │              3.4 CONSTRAINT CHECKER - HOT PATH DETAIL                           │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -204,13 +201,13 @@ This document details the hot paths and complex interactions.
   │  │ SADD constraint:sanctioned:carriers "BADCO" "EVILSHIP"     │ │
   │  └────────────────────────────────────────────────────────────┘ │
   └─────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## 2.0 CONSTRAINT ENGINE - Datalog Compilation Detail
+=== 2.0 CONSTRAINT ENGINE - Datalog Compilation Detail
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                 2.2 DATALOG COMPILER (DETAILED)                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -308,13 +305,13 @@ This document details the hot paths and complex interactions.
 │ • Bitemporal    │                    │ • Lookup tables │
 │ • Audit trail   │                    │ • Fast eval     │
 └─────────────────┘                    └─────────────────┘
-```
+....
 
----
+'''''
 
-## 4.0 FORMAL VERIFIER - Proof Generation Detail
+=== 4.0 FORMAL VERIFIER - Proof Generation Detail
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                 4.3 PROOF ENGINE (DETAILED)                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -421,13 +418,13 @@ This document details the hot paths and complex interactions.
                                         │ │ }                   │ │
                                         │ └─────────────────────┘ │
                                         └─────────────────────────┘
-```
+....
 
----
+'''''
 
-## 6.0 TRACKING ENGINE - Real-Time Flow Detail
+=== 6.0 TRACKING ENGINE - Real-Time Flow Detail
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                 6.0 TRACKING ENGINE - REAL-TIME DETAIL                          │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -541,26 +538,30 @@ This document details the hot paths and complex interactions.
 │ WebSocket push to connected clients                             │
 │ Latency target: <100ms from position received to client push    │
 └─────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Hot Path Performance Budget
+=== Hot Path Performance Budget
 
-| Stage | Target Latency | Technology | Notes |
-|-------|---------------|------------|-------|
-| Position ingestion | <1ms | Elixir GenStage | Backpressure managed |
-| Deduplication | <0.1ms | Dragonfly HLL | In-memory |
-| Shipment matching | <1ms | Dragonfly Geo | Geo-indexed |
-| ETA calculation | <5ms | Rust (if needed) | Could be Elixir |
-| Alert check | <0.5ms | Elixir pattern match | Simple conditionals |
-| PubSub broadcast | <10ms | Phoenix.PubSub | In-process |
-| WebSocket push | <50ms | Phoenix Channels | Network bound |
-| **Total (ingress → client)** | **<100ms** | | Target met |
+[cols=",,,",options="header",]
+|===
+|Stage |Target Latency |Technology |Notes
+|Position ingestion |<1ms |Elixir GenStage |Backpressure managed
+|Deduplication |<0.1ms |Dragonfly HLL |In-memory
+|Shipment matching |<1ms |Dragonfly Geo |Geo-indexed
+|ETA calculation |<5ms |Rust (if needed) |Could be Elixir
+|Alert check |<0.5ms |Elixir pattern match |Simple conditionals
+|PubSub broadcast |<10ms |Phoenix.PubSub |In-process
+|WebSocket push |<50ms |Phoenix Channels |Network bound
+|*Total (ingress → client)* |*<100ms* | |Target met
+|===
 
-| Stage | Target Latency | Technology | Notes |
-|-------|---------------|------------|-------|
-| Route optimization (cold) | <500ms | Rust | First route for request |
-| Constraint eval (hot) | <10μs | Rust + Dragonfly | Per-route |
-| Graph lookup | <1ms | SurrealDB | Indexed |
-| Formal proof | <30s | SPARK/Why3 | Async, not in hot path |
+[cols=",,,",options="header",]
+|===
+|Stage |Target Latency |Technology |Notes
+|Route optimization (cold) |<500ms |Rust |First route for request
+|Constraint eval (hot) |<10μs |Rust + Dragonfly |Per-route
+|Graph lookup |<1ms |SurrealDB |Indexed
+|Formal proof |<30s |SPARK/Why3 |Async, not in hot path
+|===

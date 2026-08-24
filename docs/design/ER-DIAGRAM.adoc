@@ -1,19 +1,16 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Entity-Relationship Diagram
+== VEDS Entity-Relationship Diagram
 
-## Overview
+=== Overview
 
-This document defines the core entities and their relationships across all three data stores.
-VEDS uses a polyglot persistence strategy with entities distributed based on query patterns.
+This document defines the core entities and their relationships across
+all three data stores. VEDS uses a polyglot persistence strategy with
+entities distributed based on query patterns.
 
----
+'''''
 
-## Data Store Mapping
+=== Data Store Mapping
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         ENTITY → DATA STORE MAPPING                             │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -32,13 +29,13 @@ VEDS uses a polyglot persistence strategy with entities distributed based on que
 │                                  • Country                                     │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Master ER Diagram
+=== Master ER Diagram
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              VEDS ER DIAGRAM                                    │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -225,15 +222,16 @@ VEDS uses a polyglot persistence strategy with entities distributed based on que
     │  └─────────────────────────┘     └─────────────────────────┘│
     │                                                             │
     └─────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Detailed Entity Definitions
+=== Detailed Entity Definitions
 
-### SurrealDB Entities (SurrealQL Schema)
+==== SurrealDB Entities (SurrealQL Schema)
 
-```surql
+[source,surql]
+----
 -- Reference Data
 DEFINE TABLE country SCHEMAFULL;
 DEFINE FIELD code ON country TYPE string ASSERT $value = /^[A-Z]{2}$/;
@@ -343,11 +341,12 @@ DEFINE FIELD timestamp ON tracking_event TYPE datetime;
 DEFINE FIELD location ON tracking_event TYPE option<geometry(point)>;
 DEFINE FIELD details ON tracking_event TYPE object;
 DEFINE INDEX idx_tracking_shipment ON tracking_event FIELDS shipment, timestamp;
-```
+----
 
-### XTDB Entities (Clojure/Datalog Schema)
+==== XTDB Entities (Clojure/Datalog Schema)
 
-```clojure
+[source,clojure]
+----
 ;; Constraint definition
 {:xt/id :constraint/wage-germany
  :constraint/id "wage-germany"
@@ -410,11 +409,11 @@ DEFINE INDEX idx_tracking_shipment ON tracking_event FIELDS shipment, timestamp;
  :audit/user-id "admin@company.com"
  :audit/reason "Germany minimum wage increased Jan 2024"
  :audit/timestamp #inst "2024-01-01T00:00:00Z"}
-```
+----
 
-### Dragonfly Keys (Redis-compatible)
+==== Dragonfly Keys (Redis-compatible)
 
-```
+....
 # Position tracking (TTL: 5 minutes)
 vessel:{vessel_id}:pos -> HASH { lat, lon, heading, speed, ts }
 shipment:{shipment_id}:vessel -> STRING vessel_id
@@ -439,34 +438,37 @@ hot_route:{origin}:{dest} -> ZSET { route_id -> score }
 # Geo index (no TTL)
 GEOADD geo:vessels {lon} {lat} {vessel_id}
 GEOADD geo:ports {lon} {lat} {port_id}
-```
+....
 
----
+'''''
 
-## Relationship Summary
+=== Relationship Summary
 
-| From | To | Relationship | Cardinality |
-|------|-----|--------------|-------------|
-| Port | Country | belongs_to | N:1 |
-| TransportNode | Port | located_at | 1:1 |
-| TransportEdge | TransportNode | from/to | N:1 |
-| TransportEdge | Carrier | operated_by | N:1 |
-| Shipment | Port | origin/destination | N:1 |
-| Shipment | CargoType | contains | N:1 |
-| Route | Shipment | for | N:1 |
-| Segment | Route | part_of | N:1 |
-| Segment | TransportEdge | uses | N:1 |
-| Decision | Route | selects | N:1 |
-| ConstraintEvaluation | Decision | part_of | N:1 |
-| ConstraintEvaluation | Constraint | evaluates | N:1 |
-| ProofCertificate | Route | proves | 1:1 |
-| TrackingEvent | Shipment | tracks | N:1 |
+[cols=",,,",options="header",]
+|===
+|From |To |Relationship |Cardinality
+|Port |Country |belongs_to |N:1
+|TransportNode |Port |located_at |1:1
+|TransportEdge |TransportNode |from/to |N:1
+|TransportEdge |Carrier |operated_by |N:1
+|Shipment |Port |origin/destination |N:1
+|Shipment |CargoType |contains |N:1
+|Route |Shipment |for |N:1
+|Segment |Route |part_of |N:1
+|Segment |TransportEdge |uses |N:1
+|Decision |Route |selects |N:1
+|ConstraintEvaluation |Decision |part_of |N:1
+|ConstraintEvaluation |Constraint |evaluates |N:1
+|ProofCertificate |Route |proves |1:1
+|TrackingEvent |Shipment |tracks |N:1
+|===
 
----
+'''''
 
-## VoID Vocabulary Alignment
+=== VoID Vocabulary Alignment
 
-```turtle
+[source,turtle]
+----
 @prefix void: <https://rdfs.org/ns/void#> .
 @prefix veds: <https://veds.example.org/vocab#> .
 @prefix dct: <https://purl.org/dc/terms/> .
@@ -492,4 +494,4 @@ veds:Decisions a void:Dataset ;
     void:feature <https://www.w3.org/ns/formats/N-Quads> ; # bitemporality
     void:class veds:Decision ;
     void:subset veds:Constraints, veds:Evaluations, veds:Proofs .
-```
+----

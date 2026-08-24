@@ -1,24 +1,22 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Julia Visualization Layer
+== VEDS Julia Visualization Layer
 
-## Overview
+=== Overview
 
-Julia provides the analytics and visualization backbone for VEDS. Its strengths:
+Julia provides the analytics and visualization backbone for VEDS. Its
+strengths:
 
-1. **Performance** - Near-C speed for numerical computing
-2. **Ecosystem** - Makie.jl for publication-quality graphics
-3. **Interactivity** - Pluto.jl notebooks for exploration
-4. **Web** - Genie.jl for dashboards
-5. **Graphs** - Graphs.jl + GraphMakie.jl for network visualization
+[arabic]
+. *Performance* - Near-C speed for numerical computing
+. *Ecosystem* - Makie.jl for publication-quality graphics
+. *Interactivity* - Pluto.jl notebooks for exploration
+. *Web* - Genie.jl for dashboards
+. *Graphs* - Graphs.jl + GraphMakie.jl for network visualization
 
----
+'''''
 
-## Architecture
+=== Architecture
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        JULIA VISUALIZATION LAYER                                │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -75,13 +73,14 @@ Julia provides the analytics and visualization backbone for VEDS. Its strengths:
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘             │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Package Dependencies
+=== Package Dependencies
 
-```julia
+[source,julia]
+----
 # Project.toml
 [deps]
 # Core visualization
@@ -126,15 +125,16 @@ JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 # Statistics
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-```
+----
 
----
+'''''
 
-## Visualization Components
+=== Visualization Components
 
-### 1. Transport Network Graph
+==== 1. Transport Network Graph
 
-```julia
+[source,julia]
+----
 module NetworkViz
 
 using Graphs, GraphMakie, GLMakie, Colors
@@ -289,11 +289,12 @@ function animate_shipment(network::TransportNetwork,
 end
 
 end # module
-```
+----
 
-### 2. Geospatial Route Mapping
+==== 2. Geospatial Route Mapping
 
-```julia
+[source,julia]
+----
 module GeoViz
 
 using GeoMakie, CairoMakie, GeoJSON, Downloads
@@ -412,11 +413,12 @@ function realtime_tracking_map(dragonfly_conn, shipment_ids::Vector{String})
 end
 
 end # module
-```
+----
 
-### 3. Analytics Dashboards
+==== 3. Analytics Dashboards
 
-```julia
+[source,julia]
+----
 module AnalyticsDashboard
 
 using Genie, Stipple, StipplePlotly
@@ -543,11 +545,12 @@ route("/dashboard") do
 end
 
 end # module
-```
+----
 
-### 4. Constraint Visualization
+==== 4. Constraint Visualization
 
-```julia
+[source,julia]
+----
 module ConstraintViz
 
 using Makie, Colors
@@ -672,15 +675,16 @@ function labor_compliance_radar(carrier::Carrier)
 end
 
 end # module
-```
+----
 
----
+'''''
 
-## Data Connectors
+=== Data Connectors
 
-### XTDB Connector
+==== XTDB Connector
 
-```julia
+[source,julia]
+----
 module XTDBClient
 
 using HTTP, JSON3
@@ -749,11 +753,12 @@ function fetch_decisions(conn::XTDBConnection, start_date::Date, end_date::Date)
 end
 
 end # module
-```
+----
 
-### SurrealDB Connector
+==== SurrealDB Connector
 
-```julia
+[source,julia]
+----
 module SurrealDBClient
 
 using HTTP, JSON3
@@ -805,13 +810,14 @@ function fetch_transport_graph(conn::SurrealConnection)
 end
 
 end # module
-```
+----
 
----
+'''''
 
-## Pluto Notebook Templates
+=== Pluto Notebook Templates
 
-```julia
+[source,julia]
+----
 ### A Pluto.jl notebook ###
 # v0.19.x
 
@@ -855,28 +861,31 @@ begin
     network = SurrealDBClient.fetch_transport_graph(surrealdb)
     NetworkViz.visualize_network(network)
 end
-```
+----
 
----
+'''''
 
-## Performance Considerations
+=== Performance Considerations
 
-| Operation | Expected Time | Notes |
-|-----------|--------------|-------|
-| Load transport graph (50K edges) | ~2s | One-time at startup |
-| Render network visualization | ~100ms | With GLMakie |
-| Update real-time positions (1000 ships) | ~10ms | Observable updates |
-| Generate static report | ~500ms | CairoMakie export |
-| Pareto frontier (1000 routes) | ~50ms | Pure Julia |
-| Dashboard page load | ~200ms | Genie + Stipple |
+[cols=",,",options="header",]
+|===
+|Operation |Expected Time |Notes
+|Load transport graph (50K edges) |~2s |One-time at startup
+|Render network visualization |~100ms |With GLMakie
+|Update real-time positions (1000 ships) |~10ms |Observable updates
+|Generate static report |~500ms |CairoMakie export
+|Pareto frontier (1000 routes) |~50ms |Pure Julia
+|Dashboard page load |~200ms |Genie + Stipple
+|===
 
----
+'''''
 
-## Deployment
+=== Deployment
 
-### Docker Container
+==== Docker Container
 
-```dockerfile
+[source,dockerfile]
+----
 FROM julia:1.10
 
 WORKDIR /app
@@ -888,11 +897,12 @@ COPY src/ ./src/
 EXPOSE 8080
 
 CMD ["julia", "--project=.", "-e", "using VEDS; VEDS.start_dashboard(8080)"]
-```
+----
 
-### Systemd Service
+==== Systemd Service
 
-```ini
+[source,ini]
+----
 [Unit]
 Description=VEDS Julia Analytics
 After=network.target
@@ -906,4 +916,4 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-```
+----

@@ -1,23 +1,25 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS VoID Vocabulary Integration
+== VEDS VoID Vocabulary Integration
 
-## Overview
+=== Overview
 
-VoID (Vocabulary of Interlinked Datasets) is an RDF vocabulary for describing datasets and their relationships. VEDS uses VoID to:
+VoID (Vocabulary of Interlinked Datasets) is an RDF vocabulary for
+describing datasets and their relationships. VEDS uses VoID to:
 
-1. **Describe datasets** - Metadata about our transport network, decisions, tracking data
-2. **Enable discoverability** - Allow external systems to find and understand VEDS data
-3. **Support federation** - Link to external datasets (ports, countries, carbon factors)
-4. **Document provenance** - Track where data comes from
+[arabic]
+. *Describe datasets* - Metadata about our transport network, decisions,
+tracking data
+. *Enable discoverability* - Allow external systems to find and
+understand VEDS data
+. *Support federation* - Link to external datasets (ports, countries,
+carbon factors)
+. *Document provenance* - Track where data comes from
 
----
+'''''
 
-## VEDS as a VoID Dataset
+=== VEDS as a VoID Dataset
 
-```turtle
+[source,turtle]
+----
 @prefix void:    <https://rdfs.org/ns/void#> .
 @prefix dct:     <https://purl.org/dc/terms/> .
 @prefix foaf:    <https://xmlns.com/foaf/0.1/> .
@@ -267,13 +269,14 @@ vedsdat:sanctions-to-ofac a void:Linkset ;
     void:linkPredicate dct:source ;
     void:objectsTarget <https://sanctionssearch.ofac.treas.gov/> ;
     void:triples 50 .
-```
+----
 
----
+'''''
 
-## VEDS Vocabulary (veds:)
+=== VEDS Vocabulary (veds:)
 
-```turtle
+[source,turtle]
+----
 @prefix veds:    <https://veds.example.org/vocab#> .
 @prefix rdfs:    <https://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl:     <https://www.w3.org/2002/07/owl#> .
@@ -427,44 +430,48 @@ veds:Proven a veds:ProofStatusValue ; rdfs:label "Proven" .
 veds:Timeout a veds:ProofStatusValue ; rdfs:label "Timeout" .
 veds:Failed a veds:ProofStatusValue ; rdfs:label "Failed" .
 veds:ManuallyApproved a veds:ProofStatusValue ; rdfs:label "Manually Approved" .
-```
+----
 
----
+'''''
 
-## VoID Discovery Endpoint
+=== VoID Discovery Endpoint
 
 VEDS exposes a well-known VoID description at:
 
-```
+....
 GET https://veds.example.org/.well-known/void
-```
+....
 
 This returns the VoID description in Turtle format, enabling:
 
-1. **Crawler discovery** - Search engines can find our datasets
-2. **Federation** - Other systems can understand our schema
-3. **Tool support** - VoID-aware tools can generate queries
-4. **Documentation** - Human-readable dataset descriptions
+[arabic]
+. *Crawler discovery* - Search engines can find our datasets
+. *Federation* - Other systems can understand our schema
+. *Tool support* - VoID-aware tools can generate queries
+. *Documentation* - Human-readable dataset descriptions
 
----
+'''''
 
-## Integration with External Vocabularies
+=== Integration with External Vocabularies
 
-| External Vocabulary | Usage in VEDS |
-|---------------------|---------------|
-| **geo:** (WGS84) | Port and node coordinates |
-| **schema.org** | Organization, Place references |
-| **dct:** (Dublin Core) | Metadata (title, description, license) |
-| **foaf:** | Publisher information |
-| **skos:** | Concept definitions |
-| **owl:** | Class relationships, sameAs links |
-| **prov:** | Provenance tracking |
+[cols=",",options="header",]
+|===
+|External Vocabulary |Usage in VEDS
+|*geo:* (WGS84) |Port and node coordinates
+|*schema.org* |Organization, Place references
+|*dct:* (Dublin Core) |Metadata (title, description, license)
+|*foaf:* |Publisher information
+|*skos:* |Concept definitions
+|*owl:* |Class relationships, sameAs links
+|*prov:* |Provenance tracking
+|===
 
----
+'''''
 
-## SPARQL Endpoint Examples
+=== SPARQL Endpoint Examples
 
-```sparql
+[source,sparql]
+----
 # Find all ports in the Netherlands
 SELECT ?port ?name ?lat ?lon
 WHERE {
@@ -496,15 +503,16 @@ WHERE {
   FILTER (?vt = "2025-12-05"^^xsd:date)
   FILTER (?tt <= "2025-12-01"^^xsd:dateTime)
 }
-```
+----
 
----
+'''''
 
-## Publishing VoID Descriptions
+=== Publishing VoID Descriptions
 
-### Automated VoID Generation
+==== Automated VoID Generation
 
-```clojure
+[source,clojure]
+----
 ;; Clojure function to generate VoID statistics
 (defn generate-void-stats [xtdb-node surrealdb-conn]
   (let [port-count (count-entities surrealdb-conn "port")
@@ -516,11 +524,9 @@ WHERE {
                 :decisions (ffirst decision-count)}
      :triples (estimate-triples port-count edge-count decision-count)
      :last-modified (java.time.Instant/now)}))
-```
+----
 
-### Scheduled VoID Updates
+==== Scheduled VoID Updates
 
-VoID statistics are regenerated:
-- **Hourly** for approximate counts
-- **Daily** for full dataset analysis
-- **On-demand** via admin API
+VoID statistics are regenerated: - *Hourly* for approximate counts -
+*Daily* for full dataset analysis - *On-demand* via admin API
