@@ -1,19 +1,15 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Data Flow Diagram - Level 2 (Sub-processes)
+== VEDS Data Flow Diagram - Level 2 (Sub-processes)
 
-## Overview
+=== Overview
 
-Level 2 decomposes each Level 1 process into its constituent sub-processes.
-This document covers all 8 major processes.
+Level 2 decomposes each Level 1 process into its constituent
+sub-processes. This document covers all 8 major processes.
 
----
+'''''
 
-## 1.0 DATA INGESTION - Decomposition
+=== 1.0 DATA INGESTION - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          1.0 DATA INGESTION                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -66,23 +62,33 @@ This document covers all 8 major processes.
 │ • Update costs  │────────►│ DS3: Dragonfly  │
 └─────────────────┘         │ (rate cache)    │
                             └─────────────────┘
-```
+....
 
-### Sub-process Details
+==== Sub-process Details
 
-| ID | Name | Input | Output | Technology |
-|----|------|-------|--------|------------|
-| 1.1 | API Connectors | External API calls | Raw responses | Elixir HTTPoison, Tesla |
-| 1.2 | Schema Normalizer | Raw JSON/XML/EDI | Normalized JSON | Elixir, custom parsers |
-| 1.3 | Data Validator | Normalized records | Validated records | Elixir Ecto changesets |
-| 1.4 | Graph Builder | Validated records | Graph mutations | SurrealDB client |
-| 1.5 | Error Handler | All error types | Alerts, retries | Elixir Supervisor |
+[width="100%",cols="13%,16%,18%,21%,32%",options="header",]
+|===
+|ID |Name |Input |Output |Technology
+|1.1 |API Connectors |External API calls |Raw responses |Elixir
+HTTPoison, Tesla
 
----
+|1.2 |Schema Normalizer |Raw JSON/XML/EDI |Normalized JSON |Elixir,
+custom parsers
 
-## 2.0 CONSTRAINT ENGINE - Decomposition
+|1.3 |Data Validator |Normalized records |Validated records |Elixir Ecto
+changesets
 
-```
+|1.4 |Graph Builder |Validated records |Graph mutations |SurrealDB
+client
+
+|1.5 |Error Handler |All error types |Alerts, retries |Elixir Supervisor
+|===
+
+'''''
+
+=== 2.0 CONSTRAINT ENGINE - Decomposition
+
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        2.0 CONSTRAINT ENGINE                                    │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -136,11 +142,12 @@ This document covers all 8 major processes.
          │ constraint results (pass/fail + details)
          ▼
        TO 3.0 ROUTE OPTIMIZER
-```
+....
 
-### Datalog Rule Examples
+==== Datalog Rule Examples
 
-```clojure
+[source,clojure]
+----
 ;; 2.2 compiles this DSL:
 ;;   "wage >= country_minimum"
 ;; Into this Datalog:
@@ -166,13 +173,13 @@ This document covers all 8 major processes.
  [(sum ?carbon) ?total-carbon]
  [(<= ?total-carbon ?carbon-budget)]
  [(ground :pass) ?status]]
-```
+----
 
----
+'''''
 
-## 3.0 ROUTE OPTIMIZER - Decomposition
+=== 3.0 ROUTE OPTIMIZER - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         3.0 ROUTE OPTIMIZER                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -255,11 +262,12 @@ This document covers all 8 major processes.
          │ ranked routes with explanations
          ▼
        TO 5.0 DECISION STORE
-```
+....
 
-### Rust Structures
+==== Rust Structures
 
-```rust
+[source,rust]
+----
 // 3.2 Path representation
 pub struct CandidatePath {
     pub segments: Vec<Segment>,
@@ -285,13 +293,13 @@ pub struct ProofObligation {
     pub property: String,          // e.g., "∀ segment, wage >= min_wage"
     pub context: serde_json::Value,
 }
-```
+----
 
----
+'''''
 
-## 4.0 FORMAL VERIFIER - Decomposition
+=== 4.0 FORMAL VERIFIER - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        4.0 FORMAL VERIFIER                                      │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -358,11 +366,12 @@ pub struct ProofObligation {
                                              │
                                              ▼
                                    TO 5.0 DECISION STORE
-```
+....
 
-### Ada/SPARK Example
+==== Ada/SPARK Example
 
-```ada
+[source,ada]
+----
 -- 4.2 Annotated SPARK procedure
 package Route_Verifier with SPARK_Mode is
 
@@ -389,13 +398,13 @@ package Route_Verifier with SPARK_Mode is
                            Segment_Wage_Valid (S.Wage, S.Country)));
 
 end Route_Verifier;
-```
+----
 
----
+'''''
 
-## 5.0 DECISION STORE - Decomposition
+=== 5.0 DECISION STORE - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         5.0 DECISION STORE                                      │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -445,11 +454,12 @@ end Route_Verifier;
                     ┌───────────┐
                     │ Dragonfly │
                     └───────────┘
-```
+....
 
-### Bitemporal Storage Example
+==== Bitemporal Storage Example
 
-```clojure
+[source,clojure]
+----
 ;; 5.2 XTDB transaction
 (xt/submit-tx node
   [[::xt/put
@@ -476,13 +486,13 @@ end Route_Verifier;
   '{:find [?route ?cost]
     :where [[?e :route/id ?route]
             [?e :route/cost-usd ?cost]]})
-```
+----
 
----
+'''''
 
-## 6.0 TRACKING ENGINE - Decomposition
+=== 6.0 TRACKING ENGINE - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         6.0 TRACKING ENGINE                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -545,13 +555,13 @@ end Route_Verifier;
 │ • Phoenix PubSub│
 │ • Per-shipment  │
 └─────────────────┘
-```
+....
 
----
+'''''
 
-## 7.0 API GATEWAY - Decomposition
+=== 7.0 API GATEWAY - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          7.0 API GATEWAY                                        │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -593,11 +603,12 @@ end Route_Verifier;
                       ▼
                INTERNAL SERVICES
                (1.0 - 6.0, 8.0)
-```
+....
 
-### API Endpoints
+==== API Endpoints
 
-```elixir
+[source,elixir]
+----
 # 7.3 REST Controller routes
 scope "/api/v1", VedsWeb do
   pipe_through [:api, :authenticated]
@@ -622,13 +633,13 @@ scope "/api/v1", VedsWeb do
   get "/audit/:entity_id", AuditController, :show
   get "/audit/:entity_id/as-of/:timestamp", AuditController, :as_of
 end
-```
+----
 
----
+'''''
 
-## 8.0 ANALYTICS & VISUALIZATION - Decomposition
+=== 8.0 ANALYTICS & VISUALIZATION - Decomposition
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                    8.0 ANALYTICS & VISUALIZATION                                │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -685,11 +696,12 @@ end
                                   │
                                   ▼
                             TO ANALYST/EXEC
-```
+....
 
-### Julia Implementation
+==== Julia Implementation
 
-```julia
+[source,julia]
+----
 # 8.3 Network Visualizer using Makie.jl
 using GLMakie, Graphs, GraphMakie
 
@@ -745,19 +757,21 @@ function map_active_shipments(shipments::Vector{Shipment})
 
     fig
 end
-```
+----
 
----
+'''''
 
-## Process Interaction Matrix
+=== Process Interaction Matrix
 
-| From → To | 1.0 | 2.0 | 3.0 | 4.0 | 5.0 | 6.0 | 7.0 | 8.0 |
-|-----------|-----|-----|-----|-----|-----|-----|-----|-----|
-| **1.0 Data Ingestion** | - | Alert | Graph | - | - | - | - | Metrics |
-| **2.0 Constraint Engine** | - | - | Rules | - | Rules | - | - | - |
-| **3.0 Route Optimizer** | - | Eval | - | Proof | Routes | - | - | - |
-| **4.0 Formal Verifier** | - | - | - | - | Certs | - | - | - |
-| **5.0 Decision Store** | - | - | Read | - | - | Active | Query | Query |
-| **6.0 Tracking Engine** | - | - | - | - | Update | - | Push | Events |
-| **7.0 API Gateway** | - | - | Request | - | Read | Read | - | - |
-| **8.0 Analytics** | - | - | - | - | Read | Read | - | - |
+[width="99%",cols="28%,9%,9%,9%,9%,9%,9%,9%,9%",options="header",]
+|===
+|From → To |1.0 |2.0 |3.0 |4.0 |5.0 |6.0 |7.0 |8.0
+|*1.0 Data Ingestion* |- |Alert |Graph |- |- |- |- |Metrics
+|*2.0 Constraint Engine* |- |- |Rules |- |Rules |- |- |-
+|*3.0 Route Optimizer* |- |Eval |- |Proof |Routes |- |- |-
+|*4.0 Formal Verifier* |- |- |- |- |Certs |- |- |-
+|*5.0 Decision Store* |- |- |Read |- |- |Active |Query |Query
+|*6.0 Tracking Engine* |- |- |- |- |Update |- |Push |Events
+|*7.0 API Gateway* |- |- |Request |- |Read |Read |- |-
+|*8.0 Analytics* |- |- |- |- |Read |Read |- |-
+|===

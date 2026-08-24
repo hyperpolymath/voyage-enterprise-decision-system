@@ -1,25 +1,19 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS UML Diagrams
+== VEDS UML Diagrams
 
-## Overview
+=== Overview
 
-This document contains UML diagrams for VEDS:
-1. **Use Case Diagrams** - Actor interactions
-2. **Sequence Diagrams** - Key workflows
-3. **State Machine Diagrams** - Entity lifecycles
-4. **Component Diagrams** - System architecture
-5. **Activity Diagrams** - Process flows
+This document contains UML diagrams for VEDS: 1. *Use Case Diagrams* -
+Actor interactions 2. *Sequence Diagrams* - Key workflows 3. *State
+Machine Diagrams* - Entity lifecycles 4. *Component Diagrams* - System
+architecture 5. *Activity Diagrams* - Process flows
 
----
+'''''
 
-## 1. Use Case Diagrams
+=== 1. Use Case Diagrams
 
-### 1.1 Primary Actors & Use Cases
+==== 1.1 Primary Actors & Use Cases
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          VEDS USE CASE DIAGRAM                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -108,39 +102,78 @@ This document contains UML diagrams for VEDS:
                               │  └─────────────────────────────────────┘  │
                               │                                           │
                               └───────────────────────────────────────────┘
-```
+....
 
-### 1.2 Use Case Details
+==== 1.2 Use Case Details
 
-| UC# | Name | Primary Actor | Description | Preconditions | Postconditions |
-|-----|------|---------------|-------------|---------------|----------------|
-| UC1 | Create Shipment | Shipper | Submit cargo details, origin/dest, constraints | Authenticated | Shipment in DRAFT |
-| UC2 | Optimize Route | Shipper | Request optimal multimodal route | Shipment exists | Route(s) generated |
-| UC3 | Track Shipment | Shipper | Real-time position and ETA | Route active | Position displayed |
-| UC4 | View Carbon Report | Shipper | See carbon footprint of shipment | Route exists | Report generated |
-| UC5 | Update Position | Carrier | Push GPS/AIS position | Carrier registered | Position cached |
-| UC6 | Confirm Pickup/Delivery | Carrier | Mark segment start/end | Segment assigned | Status updated |
-| UC7 | Report Delay | Carrier | Notify of delay with reason | Segment in transit | Alert generated |
-| UC8 | Define Constraint | Policy Admin | Create new business rule | Admin role | Constraint active |
-| UC9 | Update Labor Rules | Policy Admin | Modify wage/hours limits | Admin role | Rules updated |
-| UC10 | Set Carbon Budgets | Policy Admin | Define carbon limits | Admin role | Budgets active |
-| UC11 | Query Decision History | Auditor | Search past decisions | Auditor role | Results returned |
-| UC12 | Request Proof Certificate | Auditor | Get formal verification | Route verified | Certificate returned |
-| UC13 | Bitemporal Query | Auditor | Query "as of" specific time | Auditor role | Historical view |
-| UC14 | View Network Viz | Analyst | Interactive transport graph | - | Visualization |
-| UC15 | Generate Analytics | Analyst | Create custom reports | - | Report generated |
-| UC16 | Forecast Demand | Analyst | Predict future volumes | Historical data | Forecast model |
-| UC17 | Ingest Rates | System | Pull rates from APIs | API configured | Rates cached |
-| UC18 | Sync Constraints | System | Push rules to cache | Rules exist | Cache updated |
-| UC19 | Generate Proofs | System | Run formal verifier | Route pending | Proof generated |
+[width="100%",cols="10%,8%,21%,18%,21%,22%",options="header",]
+|===
+|UC# |Name |Primary Actor |Description |Preconditions |Postconditions
+|UC1 |Create Shipment |Shipper |Submit cargo details, origin/dest,
+constraints |Authenticated |Shipment in DRAFT
 
----
+|UC2 |Optimize Route |Shipper |Request optimal multimodal route
+|Shipment exists |Route(s) generated
 
-## 2. Sequence Diagrams
+|UC3 |Track Shipment |Shipper |Real-time position and ETA |Route active
+|Position displayed
 
-### 2.1 UC2: Optimize Route (Main Success Scenario)
+|UC4 |View Carbon Report |Shipper |See carbon footprint of shipment
+|Route exists |Report generated
 
-```
+|UC5 |Update Position |Carrier |Push GPS/AIS position |Carrier
+registered |Position cached
+
+|UC6 |Confirm Pickup/Delivery |Carrier |Mark segment start/end |Segment
+assigned |Status updated
+
+|UC7 |Report Delay |Carrier |Notify of delay with reason |Segment in
+transit |Alert generated
+
+|UC8 |Define Constraint |Policy Admin |Create new business rule |Admin
+role |Constraint active
+
+|UC9 |Update Labor Rules |Policy Admin |Modify wage/hours limits |Admin
+role |Rules updated
+
+|UC10 |Set Carbon Budgets |Policy Admin |Define carbon limits |Admin
+role |Budgets active
+
+|UC11 |Query Decision History |Auditor |Search past decisions |Auditor
+role |Results returned
+
+|UC12 |Request Proof Certificate |Auditor |Get formal verification
+|Route verified |Certificate returned
+
+|UC13 |Bitemporal Query |Auditor |Query "`as of`" specific time |Auditor
+role |Historical view
+
+|UC14 |View Network Viz |Analyst |Interactive transport graph |-
+|Visualization
+
+|UC15 |Generate Analytics |Analyst |Create custom reports |- |Report
+generated
+
+|UC16 |Forecast Demand |Analyst |Predict future volumes |Historical data
+|Forecast model
+
+|UC17 |Ingest Rates |System |Pull rates from APIs |API configured |Rates
+cached
+
+|UC18 |Sync Constraints |System |Push rules to cache |Rules exist |Cache
+updated
+
+|UC19 |Generate Proofs |System |Run formal verifier |Route pending
+|Proof generated
+|===
+
+'''''
+
+=== 2. Sequence Diagrams
+
+==== 2.1 UC2: Optimize Route (Main Success Scenario)
+
+....
 ┌───────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐
 │Shipper│     │ API       │     │ Optimizer │     │ Constraint│     │ Verifier  │     │ Decision  │
 │       │     │ Gateway   │     │ (Rust)    │     │ (Clojure) │     │ (Ada)     │     │ Store     │
@@ -208,11 +241,11 @@ This document contains UML diagrams for VEDS:
     │ 200 OK        │                 │                 │                 │                 │
     │ {routes: [...]}                 │                 │                 │                 │
     │               │                 │                 │                 │                 │
-```
+....
 
-### 2.2 UC3: Track Shipment (Real-Time WebSocket)
+==== 2.2 UC3: Track Shipment (Real-Time WebSocket)
 
-```
+....
 ┌───────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐
 │Shipper│     │ API       │     │ Tracking  │     │ Dragonfly │
 │  (WS) │     │ Gateway   │     │ Engine    │     │           │
@@ -253,11 +286,11 @@ This document contains UML diagrams for VEDS:
     │ {lat, lon,    │                 │                 │
     │  eta, delay}  │                 │                 │
     │               │                 │                 │
-```
+....
 
-### 2.3 UC18: Constraint Sync (Hot Path Setup)
+==== 2.3 UC18: Constraint Sync (Hot Path Setup)
 
-```
+....
 ┌───────────┐     ┌───────────┐     ┌───────────┐     ┌───────────┐
 │ Scheduler │     │ Constraint│     │   XTDB    │     │ Dragonfly │
 │ (Elixir)  │     │ (Clojure) │     │           │     │           │
@@ -290,15 +323,15 @@ This document contains UML diagrams for VEDS:
       │◄────────────────│                 │                 │
       │ :ok             │                 │                 │
       │                 │                 │                 │
-```
+....
 
----
+'''''
 
-## 3. State Machine Diagrams
+=== 3. State Machine Diagrams
 
-### 3.1 Shipment Lifecycle
+==== 3.1 Shipment Lifecycle
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        SHIPMENT STATE MACHINE                                   │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -381,11 +414,11 @@ This document contains UML diagrams for VEDS:
 
              cancel() ───────► CANCELLED
          ═══════════════════════════════════════════════════
-```
+....
 
-### 3.2 Constraint Lifecycle
+==== 3.2 Constraint Lifecycle
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                        CONSTRAINT STATE MACHINE                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -438,11 +471,11 @@ This document contains UML diagrams for VEDS:
                                  │ • Soft del   │
                                  │ • Auditable  │
                                  └──────────────┘
-```
+....
 
-### 3.3 Route Verification Lifecycle
+==== 3.3 Route Verification Lifecycle
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                     ROUTE VERIFICATION STATE MACHINE                            │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -487,13 +520,13 @@ This document contains UML diagrams for VEDS:
                         │ • Human sign │
                         │ • Lower conf │
                         └──────────────┘
-```
+....
 
----
+'''''
 
-## 4. Component Diagram
+=== 4. Component Diagram
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          VEDS COMPONENT DIAGRAM                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -601,13 +634,13 @@ This document contains UML diagrams for VEDS:
 │  └───────────────────────────────────────────────────────────────────────────┘  │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## 5. Activity Diagram: Route Optimization
+=== 5. Activity Diagram: Route Optimization
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                    ACTIVITY: OPTIMIZE ROUTE                                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -732,4 +765,4 @@ This document contains UML diagrams for VEDS:
                            │
                            ▼
                            ◉
-```
+....

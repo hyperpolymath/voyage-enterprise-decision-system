@@ -1,18 +1,15 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Technology Stack
+== VEDS Technology Stack
 
-## Final Architecture Decision
+=== Final Architecture Decision
 
-Based on discussion and requirements, VEDS uses the following technology stack:
+Based on discussion and requirements, VEDS uses the following technology
+stack:
 
----
+'''''
 
-## Stack Summary
+=== Stack Summary
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          VEDS TECHNOLOGY STACK                                  │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -41,14 +38,15 @@ Based on discussion and requirements, VEDS uses the following technology stack:
 │                      Kubernetes           Orchestration (optional)             │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Language Selection Rationale
+=== Language Selection Rationale
 
-### Rust - Route Optimizer
-```
+==== Rust - Route Optimizer
+
+....
 WHY: Performance + Safety
 ├── Path algorithms need sub-second response for 50K+ node graphs
 ├── Memory safety without GC prevents latency spikes
@@ -63,10 +61,11 @@ LIBRARIES:
 ├── ndarray - Matrix operations for scoring
 ├── serde - Serialization
 └── tonic - gRPC server
-```
+....
 
-### Elixir/Phoenix - API & Tracking
-```
+==== Elixir/Phoenix - API & Tracking
+
+....
 WHY: Fault Tolerance + Real-Time
 ├── OTP supervisors handle crashes gracefully
 ├── GenStage for backpressure in position streaming
@@ -80,10 +79,11 @@ LIBRARIES:
 ├── GenStage - Backpressure handling
 ├── Oban - Background jobs
 └── Tesla - HTTP client for external APIs
-```
+....
 
-### Clojure - Constraint Engine
-```
+==== Clojure - Constraint Engine
+
+....
 WHY: XTDB Native + Datalog
 ├── XTDB is written in Clojure, native integration
 ├── Datalog is natural for constraint rules
@@ -97,10 +97,11 @@ LIBRARIES:
 ├── core.async - Async constraint evaluation
 ├── cheshire - JSON handling
 └── mount - State management
-```
+....
 
-### Ada/SPARK - Formal Verification
-```
+==== Ada/SPARK - Formal Verification
+
+....
 WHY: Mathematical Proof
 ├── SPARK subset enables formal verification
 ├── GNATprove generates proof obligations
@@ -114,10 +115,11 @@ TOOLS:
 ├── Why3 - Intermediate verification language
 ├── Z3 / CVC5 - SMT solvers
 └── GPS - IDE with proof integration
-```
+....
 
-### Julia - Analytics & Visualization
-```
+==== Julia - Analytics & Visualization
+
+....
 WHY: Performance + Ecosystem
 ├── Near-C speed for numerical computing
 ├── Makie.jl - Best-in-class visualization
@@ -133,14 +135,15 @@ LIBRARIES:
 ├── Genie.jl + Stipple - Web dashboards
 ├── JuMP.jl - Optimization modeling
 └── HTTP.jl + Redis.jl - Data connectors
-```
+....
 
----
+'''''
 
-## Database Selection Rationale
+=== Database Selection Rationale
 
-### XTDB - Bitemporal Store
-```
+==== XTDB - Bitemporal Store
+
+....
 WHY: Bitemporal + Datalog
 ├── First-class bitemporality (valid-time + tx-time)
 ├── "What did we know when?" queries for audit
@@ -156,10 +159,11 @@ USE CASES:
 └── Audit entries (complete history)
 
 SCHEMA: Datalog-native documents
-```
+....
 
-### SurrealDB - Graph/Document Store
-```
+==== SurrealDB - Graph/Document Store
+
+....
 WHY: Multi-Model Simplicity
 ├── Graph + Document + Relational in one
 ├── Native graph traversals for route queries
@@ -176,10 +180,11 @@ USE CASES:
 └── Tracking events (time-series lite)
 
 SCHEMA: Strongly typed with SurrealQL
-```
+....
 
-### Dragonfly - Cache Layer
-```
+==== Dragonfly - Cache Layer
+
+....
 WHY: Redis-Compatible + Fast
 ├── Drop-in Redis replacement
 ├── 25x faster than Redis (multi-threaded)
@@ -196,13 +201,13 @@ USE CASES:
 └── Geo-indexed vessel positions
 
 SCHEMA: Redis data structures
-```
+....
 
----
+'''''
 
-## Inter-Service Communication
+=== Inter-Service Communication
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                         COMMUNICATION PATTERNS                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -251,13 +256,13 @@ SCHEMA: Redis data structures
   Constraint lookup tables pre-compiled by Clojure,
   pulled by Rust for local evaluation. No network
   call per route evaluation.
-```
+....
 
----
+'''''
 
-## Project Structure
+=== Project Structure
 
-```
+....
 voyage-enterprise-decision-system/
 ├── LICENSE
 ├── LICENSE-MIT
@@ -330,15 +335,16 @@ voyage-enterprise-decision-system/
     ├── Dockerfile.clojure
     ├── Dockerfile.ada
     └── Dockerfile.julia
-```
+....
 
----
+'''''
 
-## Development Environment
+=== Development Environment
 
-### Prerequisites
+==== Prerequisites
 
-```bash
+[source,bash]
+----
 # Languages
 rustup install stable          # Rust 1.75+
 asdf install elixir 1.16       # Elixir 1.16+
@@ -352,11 +358,12 @@ juliaup add release            # Julia 1.10+
 docker pull xtdb/xtdb:latest
 docker pull surrealdb/surrealdb:latest
 docker pull docker.dragonflydb.io/dragonflydb/dragonfly
-```
+----
 
-### Docker Compose (Development)
+==== Docker Compose (Development)
 
-```yaml
+[source,yaml]
+----
 version: '3.8'
 
 services:
@@ -431,60 +438,67 @@ services:
 volumes:
   xtdb_data:
   surreal_data:
-```
+----
 
----
+'''''
 
-## Performance Targets
+=== Performance Targets
 
-| Component | Metric | Target | Notes |
-|-----------|--------|--------|-------|
-| Route Optimization | Latency (cold) | <500ms | First route for request |
-| Route Optimization | Latency (warm) | <100ms | Cached graph |
-| Constraint Eval | Latency (hot path) | <10μs | Per-route, in-memory |
-| Position Update | Latency | <100ms | Ingest → WebSocket push |
-| API Response | p99 Latency | <200ms | Standard queries |
-| Formal Proof | Time | <30s | Async, not blocking |
-| Dashboard Load | Time | <500ms | Initial page load |
+[width="100%",cols="34%,23%,23%,20%",options="header",]
+|===
+|Component |Metric |Target |Notes
+|Route Optimization |Latency (cold) |<500ms |First route for request
+|Route Optimization |Latency (warm) |<100ms |Cached graph
+|Constraint Eval |Latency (hot path) |<10μs |Per-route, in-memory
+|Position Update |Latency |<100ms |Ingest → WebSocket push
+|API Response |p99 Latency |<200ms |Standard queries
+|Formal Proof |Time |<30s |Async, not blocking
+|Dashboard Load |Time |<500ms |Initial page load
+|===
 
----
+'''''
 
-## Scaling Strategy
+=== Scaling Strategy
 
-### Horizontal Scaling
+==== Horizontal Scaling
 
-| Component | Scaling Method |
-|-----------|----------------|
-| Elixir API | Add nodes to cluster (OTP distribution) |
-| Rust Optimizer | Replicate behind load balancer |
-| Clojure Constraints | Stateless, replicate freely |
-| XTDB | Add read replicas |
-| SurrealDB | Cluster mode (when available) |
-| Dragonfly | Cluster mode |
+[cols=",",options="header",]
+|===
+|Component |Scaling Method
+|Elixir API |Add nodes to cluster (OTP distribution)
+|Rust Optimizer |Replicate behind load balancer
+|Clojure Constraints |Stateless, replicate freely
+|XTDB |Add read replicas
+|SurrealDB |Cluster mode (when available)
+|Dragonfly |Cluster mode
+|===
 
-### Vertical Scaling
+==== Vertical Scaling
 
-| Component | Bottleneck | Mitigation |
-|-----------|------------|------------|
-| Rust Optimizer | Graph size in memory | Use Rayon for parallelism |
-| XTDB | Query complexity | Optimize Datalog, add indexes |
-| Dragonfly | Connection count | Increase file descriptors |
+[cols=",,",options="header",]
+|===
+|Component |Bottleneck |Mitigation
+|Rust Optimizer |Graph size in memory |Use Rayon for parallelism
+|XTDB |Query complexity |Optimize Datalog, add indexes
+|Dragonfly |Connection count |Increase file descriptors
+|===
 
----
+'''''
 
-## Security Considerations
+=== Security Considerations
 
-1. **API Authentication:** JWT tokens, API keys via Phoenix Guardian
-2. **Database Access:** Network isolation, credentials in secrets manager
-3. **Inter-Service:** mTLS between containers
-4. **Audit Trail:** XTDB provides immutable history
-5. **Formal Verification:** Proofs ensure constraints cannot be bypassed
+[arabic]
+. *API Authentication:* JWT tokens, API keys via Phoenix Guardian
+. *Database Access:* Network isolation, credentials in secrets manager
+. *Inter-Service:* mTLS between containers
+. *Audit Trail:* XTDB provides immutable history
+. *Formal Verification:* Proofs ensure constraints cannot be bypassed
 
----
+'''''
 
-## Monitoring & Observability
+=== Monitoring & Observability
 
-```
+....
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              OBSERVABILITY STACK                                │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -502,23 +516,26 @@ volumes:
 │   └─ Ada:       Custom metrics via HTTP endpoint                                │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
-```
+....
 
----
+'''''
 
-## Comparison to Infor
+=== Comparison to Infor
 
-| Capability | Infor | VEDS |
-|------------|-------|------|
-| Multi-modal optimization | ✅ | ✅ (with formal proofs) |
-| Real-time tracking | ✅ | ✅ (Dragonfly + Phoenix) |
-| Constraint engine | ✅ (rules engine) | ✅ (Datalog + SMT) |
-| Carbon accounting | ✅ | ✅ (first-class objective) |
-| Labor conditions | ❓ | ✅ (ILO constraints) |
-| Formal verification | ❌ | ✅ (Ada/SPARK proofs) |
-| Bitemporal audit | ❌ | ✅ (XTDB native) |
-| Open source | ❌ | ✅ (MIT/AGPL + Palimpsest) |
-| VoID/Linked Data | ❌ | ✅ (SPARQL endpoint) |
-| Advanced visualization | ✅ | ✅ (Julia + Makie) |
+[cols=",,",options="header",]
+|===
+|Capability |Infor |VEDS
+|Multi-modal optimization |✅ |✅ (with formal proofs)
+|Real-time tracking |✅ |✅ (Dragonfly + Phoenix)
+|Constraint engine |✅ (rules engine) |✅ (Datalog + SMT)
+|Carbon accounting |✅ |✅ (first-class objective)
+|Labor conditions |❓ |✅ (ILO constraints)
+|Formal verification |❌ |✅ (Ada/SPARK proofs)
+|Bitemporal audit |❌ |✅ (XTDB native)
+|Open source |❌ |✅ (MIT/AGPL + Palimpsest)
+|VoID/Linked Data |❌ |✅ (SPARQL endpoint)
+|Advanced visualization |✅ |✅ (Julia + Makie)
+|===
 
-**VEDS differentiation:** Formal verification + labor ethics + open source + bitemporality
+*VEDS differentiation:* Formal verification + labor ethics + open source
++ bitemporality

@@ -1,17 +1,14 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# VEDS Data Flow Diagram - Level 0 (Context Diagram)
+== VEDS Data Flow Diagram - Level 0 (Context Diagram)
 
-## Overview
+=== Overview
 
-The Context Diagram shows VEDS as a single process interacting with external entities.
-This is the highest abstraction level - the "black box" view.
+The Context Diagram shows VEDS as a single process interacting with
+external entities. This is the highest abstraction level - the "`black
+box`" view.
 
-## Diagram
+=== Diagram
 
-```
+....
                                     ┌─────────────────────┐
                                     │   TRANSPORT APIs    │
                                     │  ─────────────────  │
@@ -55,50 +52,72 @@ This is the highest abstraction level - the "black box" view.
                                     │  • CFO              │
                                     │  • Sustainability   │
                                     └─────────────────────┘
-```
+....
 
-## External Entities
+=== External Entities
 
-| Entity | Description | Data Sent to VEDS | Data Received from VEDS |
-|--------|-------------|-------------------|-------------------------|
-| **Transport APIs** | Third-party logistics providers | Rates, schedules, vessel/train positions, availability | Booking requests, capacity reservations |
-| **Shipper** | Companies sending goods | Shipment requests (origin, dest, constraints, cargo) | Optimized routes, tracking, carbon reports |
-| **Carrier** | Companies operating vehicles | GPS positions, status updates, delays, ETAs | Dispatch instructions, route assignments |
-| **Policy Admin** | Internal governance team | Labor rules, carbon budgets, wage minimums, constraints | Constraint validation results, compliance reports |
-| **Auditor** | Internal/external reviewers | Audit queries (what happened when, why this route) | Bitemporal history, decision proofs, audit trails |
-| **Analyst/Exec** | Business intelligence users | Visualization requests, KPI queries | Dashboards, reports, trend analysis |
+[width="100%",cols="13%,20%,29%,38%",options="header",]
+|===
+|Entity |Description |Data Sent to VEDS |Data Received from VEDS
+|*Transport APIs* |Third-party logistics providers |Rates, schedules,
+vessel/train positions, availability |Booking requests, capacity
+reservations
 
-## Data Flows Summary
+|*Shipper* |Companies sending goods |Shipment requests (origin, dest,
+constraints, cargo) |Optimized routes, tracking, carbon reports
 
-### Inbound Flows
-1. **Shipment Requests** - What needs to move, from where to where, with what constraints
-2. **Transport Data** - Real-time rates, schedules, positions from external APIs
-3. **Carrier Updates** - GPS, status, delays from vehicles in transit
-4. **Policy Definitions** - Business rules, labor standards, environmental constraints
-5. **Audit Queries** - Historical inquiries into past decisions
+|*Carrier* |Companies operating vehicles |GPS positions, status updates,
+delays, ETAs |Dispatch instructions, route assignments
 
-### Outbound Flows
-1. **Optimized Routes** - Multi-modal paths satisfying all constraints
-2. **Tracking Updates** - Real-time position and ETA for shipments
-3. **Dispatch Instructions** - Orders to carriers for pickup/delivery
-4. **Carbon Reports** - Environmental impact metrics per shipment
-5. **Audit Responses** - Bitemporal history with decision proofs
-6. **Visualizations** - Dashboards, maps, analytics
+|*Policy Admin* |Internal governance team |Labor rules, carbon budgets,
+wage minimums, constraints |Constraint validation results, compliance
+reports
 
-## VoID Vocabulary Alignment
+|*Auditor* |Internal/external reviewers |Audit queries (what happened
+when, why this route) |Bitemporal history, decision proofs, audit trails
+
+|*Analyst/Exec* |Business intelligence users |Visualization requests,
+KPI queries |Dashboards, reports, trend analysis
+|===
+
+=== Data Flows Summary
+
+==== Inbound Flows
+
+[arabic]
+. *Shipment Requests* - What needs to move, from where to where, with
+what constraints
+. *Transport Data* - Real-time rates, schedules, positions from external
+APIs
+. *Carrier Updates* - GPS, status, delays from vehicles in transit
+. *Policy Definitions* - Business rules, labor standards, environmental
+constraints
+. *Audit Queries* - Historical inquiries into past decisions
+
+==== Outbound Flows
+
+[arabic]
+. *Optimized Routes* - Multi-modal paths satisfying all constraints
+. *Tracking Updates* - Real-time position and ETA for shipments
+. *Dispatch Instructions* - Orders to carriers for pickup/delivery
+. *Carbon Reports* - Environmental impact metrics per shipment
+. *Audit Responses* - Bitemporal history with decision proofs
+. *Visualizations* - Dashboards, maps, analytics
+
+=== VoID Vocabulary Alignment
 
 This context diagram maps to VoID (Vocabulary of Interlinked Datasets):
 
-- **VEDS** is a `void:Dataset`
-- Each external entity provides/consumes `void:Linkset` connections
-- Transport APIs are `void:externalLink` sources
-- Audit trails are `void:dataDump` exports
+* *VEDS* is a `+void:Dataset+`
+* Each external entity provides/consumes `+void:Linkset+` connections
+* Transport APIs are `+void:externalLink+` sources
+* Audit trails are `+void:dataDump+` exports
 
-See `/docs/vocab/VOID-MAPPING.md` for detailed vocabulary alignment.
+See `+/docs/vocab/VOID-MAPPING.md+` for detailed vocabulary alignment.
 
-## Notes
+=== Notes
 
-- VEDS is shown as a single process at Level 0
-- Level 1 will decompose VEDS into major subsystems
-- All data flows are bidirectional where indicated
-- External entities may overlap (e.g., DHL is both shipper and carrier)
+* VEDS is shown as a single process at Level 0
+* Level 1 will decompose VEDS into major subsystems
+* All data flows are bidirectional where indicated
+* External entities may overlap (e.g., DHL is both shipper and carrier)
