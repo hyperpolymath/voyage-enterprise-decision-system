@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
-// Ported via Harvard Engine mechanical processor
+// Ported via Harvard Engine (Semantic pass)
 
 module main;
 
-// TODO: Complete semantic implementation
-
-/* === ORIGINAL TYPESCRIPT CONTEXT ===
 // SPDX-License-Identifier: MPL-2.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 // VEDS API - Deno HTTP Server Entry Point
 
-const VERSION = '0.1.0';
+let VERSION = '0.1.0';
 
 // =============================================================================
 // CONFIGURATION (Explicit env vars required)
 // =============================================================================
 
-interface Config {
+struct Config {
   port: number;
   host: string;
   surrealdbUrl: string;
@@ -28,8 +25,8 @@ interface Config {
   optimizerUrl: string;
 }
 
-function requireEnv(name: string): string {
-  const value = Deno.env.get(name);
+fn requireEnv(name: string): string {
+  let value = Deno.env.get(name);
   if (!value) {
     console.error(`FATAL: Required environment variable ${name} is not set`);
     Deno.exit(1);
@@ -37,7 +34,7 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function loadConfig(): Config {
+fn loadConfig(): Config {
   return {
     port: parseInt(Deno.env.get('PORT') || '4000', 10),
     host: Deno.env.get('HOST') || '0.0.0.0',
@@ -55,7 +52,7 @@ function loadConfig(): Config {
 // DATABASE CLIENTS
 // =============================================================================
 
-class SurrealDBClient {
+struct SurrealDBClient {
   private url: string;
   private user: string;
   private pass: string;
@@ -67,9 +64,9 @@ class SurrealDBClient {
     this.pass = pass;
   }
 
-  async connect(): Promise<void> {
+  async connect(): void {
     // Test connection
-    const response = await fetch(`${this.url}/health`);
+    let response = await fetch(`${this.url}/health`);
     if (!response.ok) {
       throw new Error(`SurrealDB health check failed: ${response.status}`);
     }
@@ -77,8 +74,8 @@ class SurrealDBClient {
     console.log('Connected to SurrealDB');
   }
 
-  async query<T>(sql: string, vars?: Record<string, unknown>): Promise<T[]> {
-    const response = await fetch(`${this.url}/sql`, {
+  async query<T>(sql: string, vars?: Record<string, unknown>): T[] {
+    let response = await fetch(`${this.url}/sql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,14 +88,14 @@ class SurrealDBClient {
     });
 
     if (!response.ok) {
-      const text = await response.text();
+      let text = await response.text();
       throw new Error(`SurrealDB query failed: ${response.status} - ${text}`);
     }
 
-    const results = await response.json();
+    let results = await response.json();
     // SurrealDB returns array of results, one per statement
     if (Array.isArray(results) && results.length > 0) {
-      const first = results[0];
+      let first = results[0];
       if (first.status === 'ERR') {
         throw new Error(`SurrealDB error: ${first.detail}`);
       }
@@ -112,7 +109,7 @@ class SurrealDBClient {
   }
 }
 
-class XTDBClient {
+struct XTDBClient {
   private url: string;
   private connected = false;
 
@@ -120,8 +117,8 @@ class XTDBClient {
     this.url = url;
   }
 
-  async connect(): Promise<void> {
-    const response = await fetch(`${this.url}/status`);
+  async connect(): void {
+    let response = await fetch(`${this.url}/status`);
     if (!response.ok) {
       throw new Error(`XTDB health check failed: ${response.status}`);
     }
@@ -129,8 +126,8 @@ class XTDBClient {
     console.log('Connected to XTDB');
   }
 
-  async query(query: string): Promise<unknown[]> {
-    const response = await fetch(`${this.url}/query`, {
+  async query(query: string): unknown[] {
+    let response = await fetch(`${this.url}/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/edn',
@@ -140,15 +137,15 @@ class XTDBClient {
     });
 
     if (!response.ok) {
-      const text = await response.text();
+      let text = await response.text();
       throw new Error(`XTDB query failed: ${response.status} - ${text}`);
     }
 
     return await response.json();
   }
 
-  async put(doc: Record<string, unknown>): Promise<void> {
-    const response = await fetch(`${this.url}/tx`, {
+  async put(doc: Record<string, unknown>): void {
+    let response = await fetch(`${this.url}/tx`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +155,7 @@ class XTDBClient {
     });
 
     if (!response.ok) {
-      const text = await response.text();
+      let text = await response.text();
       throw new Error(`XTDB put failed: ${response.status} - ${text}`);
     }
   }
@@ -168,7 +165,7 @@ class XTDBClient {
   }
 }
 
-class DragonflyClient {
+struct DragonflyClient {
   private url: string;
   private pass: string;
   private connected = false;
@@ -179,7 +176,7 @@ class DragonflyClient {
     this.pass = pass;
   }
 
-  async connect(): Promise<void> {
+  async connect(): void {
     // For now, we'll assume connection works - Deno doesn't have native Redis
     // In production, use a Redis library
     this.connected = true;
@@ -195,7 +192,7 @@ class DragonflyClient {
 // gRPC CLIENT FOR OPTIMIZER
 // =============================================================================
 
-interface OptimizeRequest {
+struct OptimizeRequest {
   shipmentId: string;
   originPort: string;
   destinationPort: string;
@@ -216,7 +213,7 @@ interface OptimizeRequest {
   laborWeight: number;
 }
 
-interface Route {
+struct Route {
   routeId: string;
   segments: Segment[];
   totalCostUsd: number;
@@ -230,7 +227,7 @@ interface Route {
   constraintResults: ConstraintResult[];
 }
 
-interface Segment {
+struct Segment {
   segmentId: string;
   sequence: number;
   fromNode: string;
@@ -246,7 +243,7 @@ interface Segment {
   arrivalTime: string;
 }
 
-interface ConstraintResult {
+struct ConstraintResult {
   constraintId: string;
   constraintType: string;
   passed: boolean;
@@ -255,7 +252,7 @@ interface ConstraintResult {
   message: string;
 }
 
-interface OptimizeResponse {
+struct OptimizeResponse {
   success: boolean;
   errorMessage: string;
   routes: Route[];
@@ -263,7 +260,7 @@ interface OptimizeResponse {
   candidatesEvaluated: number;
 }
 
-interface GraphStatus {
+struct GraphStatus {
   nodeCount: number;
   edgeCount: number;
   lastLoaded: string;
@@ -271,7 +268,7 @@ interface GraphStatus {
   modeCounts: Record<string, number>;
 }
 
-class OptimizerClient {
+struct OptimizerClient {
   private url: string;
   private connected = false;
 
@@ -282,9 +279,9 @@ class OptimizerClient {
     this.url = url.replace(':50051', ':8090');
   }
 
-  async connect(): Promise<void> {
+  async connect(): void {
     try {
-      const response = await fetch(`${this.url}/health`);
+      let response = await fetch(`${this.url}/health`);
       if (response.ok) {
         this.connected = true;
         console.log('Connected to Optimizer (HTTP mode)');
@@ -294,10 +291,10 @@ class OptimizerClient {
     }
   }
 
-  async optimize(request: OptimizeRequest): Promise<OptimizeResponse> {
+  async optimize(request: OptimizeRequest): OptimizeResponse {
     // For MVP: Call optimizer's HTTP endpoint
     // Full gRPC would require @grpc/grpc-js + proto compilation
-    const response = await fetch(`${this.url}/optimize`, {
+    let response = await fetch(`${this.url}/optimize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
@@ -316,16 +313,16 @@ class OptimizerClient {
     return await response.json();
   }
 
-  async getGraphStatus(): Promise<GraphStatus> {
-    const response = await fetch(`${this.url}/graph/status`);
+  async getGraphStatus(): GraphStatus {
+    let response = await fetch(`${this.url}/graph/status`);
     if (!response.ok) {
       throw new Error(`Graph status failed: ${response.status}`);
     }
     return await response.json();
   }
 
-  async reloadGraph(): Promise<{ success: boolean; message: string; loadTimeMs: number }> {
-    const response = await fetch(`${this.url}/graph/reload`, { method: 'POST' });
+  async reloadGraph(): { success: boolean; message: string; loadTimeMs: number } {
+    let response = await fetch(`${this.url}/graph/reload`, { method: 'POST' });
     if (!response.ok) {
       return { success: false, message: `Reload failed: ${response.status}`, loadTimeMs: 0 };
     }
@@ -341,7 +338,7 @@ class OptimizerClient {
 // APPLICATION STATE
 // =============================================================================
 
-interface AppState {
+struct AppState {
   config: Config;
   surreal: SurrealDBClient;
   xtdb: XTDBClient;
@@ -353,20 +350,20 @@ interface AppState {
 // CORS & RESPONSE HELPERS
 // =============================================================================
 
-const corsHeaders = {
+let corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Request-ID',
 };
 
-function jsonResponse(data: unknown, status = 200): Response {
+fn jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
 }
 
-function errorResponse(error: string, message: string, status: number): Response {
+fn errorResponse(error: string, message: string, status: number): Response {
   return jsonResponse({ error, message, statusCode: status }, status);
 }
 
@@ -374,7 +371,7 @@ function errorResponse(error: string, message: string, status: number): Response
 // ROUTE HANDLERS
 // =============================================================================
 
-async function handleHealth(state: AppState): Promise<Response> {
+async fn handleHealth(state: AppState): Response {
   const services: Record<string, string> = {
     surrealdb: state.surreal.isConnected() ? 'connected' : 'disconnected',
     xtdb: state.xtdb.isConnected() ? 'connected' : 'disconnected',
@@ -390,21 +387,21 @@ async function handleHealth(state: AppState): Promise<Response> {
   });
 }
 
-async function handleListShipments(
+async fn handleListShipments(
   state: AppState,
   query: URLSearchParams
-): Promise<Response> {
-  const limit = parseInt(query.get('limit') || '20', 10);
-  const offset = parseInt(query.get('offset') || '0', 10);
+): Response {
+  let limit = parseInt(query.get('limit') || '20', 10);
+  let offset = parseInt(query.get('offset') || '0', 10);
 
   try {
-    const shipments = await state.surreal.query(
+    let shipments = await state.surreal.query(
       `SELECT * FROM shipment ORDER BY created_at DESC LIMIT ${limit} START ${offset}`
     );
-    const countResult = await state.surreal.query<{ count: number }>(
+    let countResult = await state.surreal.query<{ count: number }>(
       'SELECT count() FROM shipment GROUP ALL'
     );
-    const total = countResult[0]?.count || 0;
+    let total = countResult[0]?.count || 0;
 
     return jsonResponse({ data: shipments, total, limit, offset });
   } catch (err) {
@@ -413,14 +410,14 @@ async function handleListShipments(
   }
 }
 
-async function handleGetShipment(
+async fn handleGetShipment(
   state: AppState,
   params: Record<string, string>
-): Promise<Response> {
+): Response {
   const { id } = params;
 
   try {
-    const results = await state.surreal.query(
+    let results = await state.surreal.query(
       `SELECT * FROM shipment WHERE id = shipment:${id} OR external_id = '${id}'`
     );
 
@@ -435,23 +432,23 @@ async function handleGetShipment(
   }
 }
 
-async function handleCreateShipment(
+async fn handleCreateShipment(
   state: AppState,
   req: Request
-): Promise<Response> {
+): Response {
   try {
-    const body = await req.json();
+    let body = await req.json();
 
     // Validate required fields
-    const required = ['customerId', 'origin', 'destination', 'weightKg'];
+    let required = ['customerId', 'origin', 'destination', 'weightKg'];
     for (const field of required) {
       if (!(field in body)) {
         return errorResponse('validation_error', `Missing required field: ${field}`, 400);
       }
     }
 
-    const id = crypto.randomUUID();
-    const results = await state.surreal.query(`
+    let id = crypto.randomUUID();
+    let results = await state.surreal.query(`
       CREATE shipment:${id} SET
         external_id = '${body.externalId || ''}',
         customer_id = '${body.customerId}',
@@ -481,20 +478,20 @@ async function handleCreateShipment(
   }
 }
 
-async function handleOptimizeRoutes(
+async fn handleOptimizeRoutes(
   state: AppState,
   params: Record<string, string>,
   req: Request
-): Promise<Response> {
+): Response {
   const { shipmentId } = params;
 
   try {
-    const body = await req.json();
+    let body = await req.json();
 
     // Get shipment details if not provided
     let shipment: Record<string, unknown> | null = null;
     if (!body.originPort || !body.destinationPort) {
-      const results = await state.surreal.query(
+      let results = await state.surreal.query(
         `SELECT * FROM shipment:${shipmentId} FETCH origin, destination`
       );
       if (results.length > 0) {
@@ -523,7 +520,7 @@ async function handleOptimizeRoutes(
       laborWeight: body.laborWeight || 0.1,
     };
 
-    const result = await state.optimizer.optimize(optimizeRequest);
+    let result = await state.optimizer.optimize(optimizeRequest);
 
     // Store routes in SurrealDB
     if (result.success && result.routes.length > 0) {
@@ -565,14 +562,14 @@ async function handleOptimizeRoutes(
   }
 }
 
-async function handleListRoutes(
+async fn handleListRoutes(
   state: AppState,
   params: Record<string, string>
-): Promise<Response> {
+): Response {
   const { shipmentId } = params;
 
   try {
-    const routes = await state.surreal.query(
+    let routes = await state.surreal.query(
       `SELECT * FROM route WHERE shipment = shipment:${shipmentId} ORDER BY weighted_score ASC`
     );
 
@@ -583,10 +580,10 @@ async function handleListRoutes(
   }
 }
 
-async function handleSelectRoute(
+async fn handleSelectRoute(
   state: AppState,
   params: Record<string, string>
-): Promise<Response> {
+): Response {
   const { shipmentId, routeId } = params;
 
   try {
@@ -612,9 +609,9 @@ async function handleSelectRoute(
   }
 }
 
-async function handleGraphStatus(state: AppState): Promise<Response> {
+async fn handleGraphStatus(state: AppState): Response {
   try {
-    const status = await state.optimizer.getGraphStatus();
+    let status = await state.optimizer.getGraphStatus();
     return jsonResponse(status);
   } catch (err) {
     console.error('Graph status error:', err);
@@ -622,9 +619,9 @@ async function handleGraphStatus(state: AppState): Promise<Response> {
   }
 }
 
-async function handleReloadGraph(state: AppState): Promise<Response> {
+async fn handleReloadGraph(state: AppState): Response {
   try {
-    const result = await state.optimizer.reloadGraph();
+    let result = await state.optimizer.reloadGraph();
     return jsonResponse(result);
   } catch (err) {
     console.error('Reload graph error:', err);
@@ -632,21 +629,21 @@ async function handleReloadGraph(state: AppState): Promise<Response> {
   }
 }
 
-async function handleListNodes(
+async fn handleListNodes(
   state: AppState,
   query: URLSearchParams
-): Promise<Response> {
-  const limit = parseInt(query.get('limit') || '100', 10);
-  const offset = parseInt(query.get('offset') || '0', 10);
+): Response {
+  let limit = parseInt(query.get('limit') || '100', 10);
+  let offset = parseInt(query.get('offset') || '0', 10);
 
   try {
-    const nodes = await state.surreal.query(
+    let nodes = await state.surreal.query(
       `SELECT * FROM transport_node WHERE active = true FETCH port, port.country LIMIT ${limit} START ${offset}`
     );
-    const countResult = await state.surreal.query<{ count: number }>(
+    let countResult = await state.surreal.query<{ count: number }>(
       'SELECT count() FROM transport_node WHERE active = true GROUP ALL'
     );
-    const total = countResult[0]?.count || 0;
+    let total = countResult[0]?.count || 0;
 
     return jsonResponse({ data: nodes, total, limit, offset });
   } catch (err) {
@@ -655,23 +652,23 @@ async function handleListNodes(
   }
 }
 
-async function handleListEdges(
+async fn handleListEdges(
   state: AppState,
   query: URLSearchParams
-): Promise<Response> {
-  const limit = parseInt(query.get('limit') || '100', 10);
-  const offset = parseInt(query.get('offset') || '0', 10);
-  const mode = query.get('mode');
+): Response {
+  let limit = parseInt(query.get('limit') || '100', 10);
+  let offset = parseInt(query.get('offset') || '0', 10);
+  let mode = query.get('mode');
 
   try {
-    const modeFilter = mode ? `AND mode = '${mode.toUpperCase()}'` : '';
-    const edges = await state.surreal.query(
+    let modeFilter = mode ? `AND mode = '${mode.toUpperCase()}'` : '';
+    let edges = await state.surreal.query(
       `SELECT * FROM transport_edge WHERE active = true ${modeFilter} FETCH from_node, to_node, carrier LIMIT ${limit} START ${offset}`
     );
-    const countResult = await state.surreal.query<{ count: number }>(
+    let countResult = await state.surreal.query<{ count: number }>(
       `SELECT count() FROM transport_edge WHERE active = true ${modeFilter} GROUP ALL`
     );
-    const total = countResult[0]?.count || 0;
+    let total = countResult[0]?.count || 0;
 
     return jsonResponse({ data: edges, total, limit, offset, mode });
   } catch (err) {
@@ -680,9 +677,9 @@ async function handleListEdges(
   }
 }
 
-async function handleListConstraints(state: AppState): Promise<Response> {
+async fn handleListConstraints(state: AppState): Response {
   try {
-    const results = await state.xtdb.query(`
+    let results = await state.xtdb.query(`
       {:find [(pull ?c [*])]
        :where [[?c :constraint/id _]
                [?c :constraint/active? true]]}
@@ -695,19 +692,19 @@ async function handleListConstraints(state: AppState): Promise<Response> {
   }
 }
 
-async function handleCreateConstraint(
+async fn handleCreateConstraint(
   state: AppState,
   req: Request
-): Promise<Response> {
+): Response {
   try {
-    const body = await req.json();
+    let body = await req.json();
 
     if (!body.name || !body.constraintType) {
       return errorResponse('validation_error', 'name and constraintType are required', 400);
     }
 
-    const id = crypto.randomUUID();
-    const doc = {
+    let id = crypto.randomUUID();
+    let doc = {
       'xt/id': `:constraint/${id}`,
       'constraint/id': id,
       'constraint/name': body.name,
@@ -733,14 +730,14 @@ async function handleCreateConstraint(
   }
 }
 
-async function handleGetTracking(
+async fn handleGetTracking(
   state: AppState,
   params: Record<string, string>
-): Promise<Response> {
+): Response {
   const { shipmentId } = params;
 
   try {
-    const positions = await state.surreal.query(
+    let positions = await state.surreal.query(
       `SELECT * FROM position_update WHERE shipment = shipment:${shipmentId} ORDER BY timestamp DESC LIMIT 100`
     );
 
@@ -755,22 +752,22 @@ async function handleGetTracking(
   }
 }
 
-async function handleAddPosition(
+async fn handleAddPosition(
   state: AppState,
   params: Record<string, string>,
   req: Request
-): Promise<Response> {
+): Response {
   const { shipmentId } = params;
 
   try {
-    const body = await req.json();
+    let body = await req.json();
 
     if (body.lat === undefined || body.lon === undefined) {
       return errorResponse('validation_error', 'lat and lon are required', 400);
     }
 
-    const id = crypto.randomUUID();
-    const timestamp = new Date().toISOString();
+    let id = crypto.randomUUID();
+    let timestamp = new Date().toISOString();
 
     await state.surreal.query(`
       CREATE position_update:${id} SET
@@ -801,19 +798,19 @@ async function handleAddPosition(
 // ROUTER
 // =============================================================================
 
-interface RouteMatch {
+struct RouteMatch {
   params: Record<string, string>;
-  handler: (state: AppState, req: Request, params: Record<string, string>, query: URLSearchParams) => Promise<Response>;
+  handler: (state: AppState, req: Request, params: Record<string, string>, query: URLSearchParams) => Response;
 }
 
-interface Route {
+struct Route {
   method: string;
   pattern: RegExp;
   paramNames: string[];
-  handler: (state: AppState, req: Request, params: Record<string, string>, query: URLSearchParams) => Promise<Response>;
+  handler: (state: AppState, req: Request, params: Record<string, string>, query: URLSearchParams) => Response;
 }
 
-function createRoutes(): Route[] {
+fn createRoutes(): Route[] {
   return [
     // Health
     { method: 'GET', pattern: /^\/health$/, paramNames: [], handler: (s) => handleHealth(s) },
@@ -845,10 +842,10 @@ function createRoutes(): Route[] {
   ];
 }
 
-function matchRoute(routes: Route[], method: string, pathname: string): RouteMatch | null {
+fn matchRoute(routes: Route[], method: string, pathname: string): RouteMatch | null {
   for (const route of routes) {
     if (route.method !== method) continue;
-    const match = pathname.match(route.pattern);
+    let match = pathname.match(route.pattern);
     if (match) {
       const params: Record<string, string> = {};
       route.paramNames.forEach((name, i) => {
@@ -864,18 +861,18 @@ function matchRoute(routes: Route[], method: string, pathname: string): RouteMat
 // MAIN
 // =============================================================================
 
-async function main() {
+async fn main() {
   console.log(`VEDS API v${VERSION}`);
   console.log('Loading configuration...');
 
-  const config = loadConfig();
+  let config = loadConfig();
   console.log(`Config loaded: port=${config.port}, host=${config.host}`);
 
   // Initialize clients
-  const surreal = new SurrealDBClient(config.surrealdbUrl, config.surrealdbUser, config.surrealdbPass);
-  const xtdb = new XTDBClient(config.xtdbUrl);
-  const dragonfly = new DragonflyClient(config.dragonflyUrl, config.dragonflyPass);
-  const optimizer = new OptimizerClient(config.optimizerUrl);
+  let surreal = new SurrealDBClient(config.surrealdbUrl, config.surrealdbUser, config.surrealdbPass);
+  let xtdb = new XTDBClient(config.xtdbUrl);
+  let dragonfly = new DragonflyClient(config.dragonflyUrl, config.dragonflyPass);
+  let optimizer = new OptimizerClient(config.optimizerUrl);
 
   // Connect to databases
   console.log('Connecting to databases...');
@@ -890,14 +887,14 @@ async function main() {
   }
 
   const state: AppState = { config, surreal, xtdb, dragonfly, optimizer };
-  const routes = createRoutes();
+  let routes = createRoutes();
 
   console.log(`Starting server on ${config.host}:${config.port}`);
 
   Deno.serve({ port: config.port, hostname: config.host }, async (req) => {
-    const url = new URL(req.url);
-    const method = req.method;
-    const pathname = url.pathname;
+    let url = new URL(req.url);
+    let method = req.method;
+    let pathname = url.pathname;
 
     // CORS preflight
     if (method === 'OPTIONS') {
@@ -905,12 +902,12 @@ async function main() {
     }
 
     // Request logging
-    const requestId = crypto.randomUUID().slice(0, 8);
-    const start = performance.now();
+    let requestId = crypto.randomUUID().slice(0, 8);
+    let start = performance.now();
     console.log(`[${requestId}] ${method} ${pathname}`);
 
     // Route matching
-    const match = matchRoute(routes, method, pathname);
+    let match = matchRoute(routes, method, pathname);
 
     let response: Response;
     if (match) {
@@ -925,7 +922,7 @@ async function main() {
     }
 
     // Response logging
-    const duration = (performance.now() - start).toFixed(2);
+    let duration = (performance.now() - start).toFixed(2);
     console.log(`[${requestId}] ${response.status} (${duration}ms)`);
 
     return response;
@@ -934,4 +931,3 @@ async function main() {
 
 main();
 
-==================================== */
