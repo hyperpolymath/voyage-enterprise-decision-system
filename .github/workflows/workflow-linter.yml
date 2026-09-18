@@ -9,7 +9,6 @@ on:
     paths:
       - '.github/workflows/**'
 permissions: read-all
-  actions: read
 jobs:
   lint-workflows:
     runs-on: ubuntu-latest
