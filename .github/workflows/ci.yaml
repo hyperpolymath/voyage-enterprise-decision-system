@@ -26,6 +26,8 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
         with:
+          toolchain: stable
+        with:
           toolchain: ${{ env.RUST_VERSION }}
           components: clippy, rustfmt
       - name: Cache cargo
@@ -117,7 +119,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Setup Clojure
-        uses: DeLaGuardo/setup-clojure@13.5
+        uses: DeLaGuardo/setup-clojure@f556541eb28a9303896cee0679ba9f60b898300f  # 13.5
         with:
           cli: 1.11.1.1435
       - name: Cache deps
