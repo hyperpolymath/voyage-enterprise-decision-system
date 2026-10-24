@@ -1,86 +1,108 @@
 # SPDX-License-Identifier: MPL-2.0
-"""
-VEDSViz — High-Assurance Transport Visualization Engine.
-
-This Julia module implements the interactive visualization layer for the 
-Voyage Enterprise Decision System (VEDS). It is designed to provide 
-deterministic, high-performance rendering of global logistics networks.
-
-CORE CAPABILITIES:
-1. **Geographic Projection**: Render multi-modal routes on world maps using GeoMakie.
-2. **Multi-Objective Analysis**: Visualize Pareto frontiers for cost/time/carbon tradeoffs.
-3. **Topology Mapping**: High-fidelity network graphs using GraphMakie.
-4. **Real-time Observability**: Live tracking of shipments via Redis/Dragonfly subscriptions.
-5. **Regulatory Compliance**: Integrated dashboards for carbon and wage monitoring.
-"""
 module VEDSViz
 
-using Dates
-using Colors
-using Graphs
-using StaticArrays
+using Dates, Colors, Graphs, StaticArrays, Statistics
+using CairoMakie, GeoMakie, GraphMakie, WGLMakie
+using Genie, HTTP, JSON3, StructTypes, LibPQ, Redis
 
-# VISUALIZATION KERNEL: Makie-based rendering stack.
-using CairoMakie  # Vector graphics (PDF/SVG)
-using GeoMakie    # Geographic projections (Robinson, Mercator)
-using GraphMakie  # Complex network layouts
-using WGLMakie    # WebGL for browser interactivity
+include("components/GeoMap.jl")
+include("components/ParetoPlot.jl")
+include("components/ConstraintDash.jl")
+include("components/RealTimeTracker.jl")
 
-# DATA MODELING: StructTypes integration for zero-copy JSON interop.
-using JSON3
-using StructTypes
+using .GeoMap, .ParetoPlot, .ConstraintDash, .RealTimeTracker
 
-# DATABASE: Integration with the VEDS persistence layer.
-using LibPQ       # PostgreSQL for historical data
-using Redis       # Dragonfly for real-time events
+const MODE_COLORS = Dict{Symbol, Colorant}(
+    :maritime => colorant"#1E88E5",
+    :rail     => colorant"#43A047",
+    :road     => colorant"#FB8C00",
+    :air      => colorant"#8E24AA",
+)
 
-# --- DOMAIN ENTITIES ---
-
-"""
-SEGMENT: The atomic unit of transport between two nodes.
-Includes cost, time, carbon footprint, and labor compliance data.
-"""
 struct Segment
     id::String
     origin_lat::Float64
     origin_lon::Float64
     dest_lat::Float64
     dest_lon::Float64
-    mode::Symbol  # :maritime, :rail, :road, :air
+    mode::Symbol
     carrier::String
     cost_usd::Float64
     time_hours::Float64
     carbon_kg::Float64
     wage_cents::Int
+    violations::Vector{Symbol}
 end
+
+Segment(id::String, olat::Real, olon::Real, dlat::Real, dlon::Real, mode::Symbol, carrier::String, cost::Real, hrs::Real, co2::Real, wage::Integer) =
+    Segment(id, Float64(olat), Float64(olon), Float64(dlat), Float64(dlon), mode, carrier, Float64(cost), Float64(hrs), Float64(co2), Int(wage), Symbol[])
 
 StructTypes.StructType(::Type{Segment}) = StructTypes.Struct()
 
-# --- RENDERING ENGINE ---
+struct Route
+    id::String
+    segments::Vector{Segment}
+    total_cost::Float64
+    total_time_hours::Float64
+    total_carbon_kg::Float64
+    pareto_rank::Int
+end
+StructTypes.StructType(::Type{Route}) = StructTypes.Struct()
 
-"""
-    render_route_map(routes::Vector{Route}) -> Figure
+struct ParetoPoint
+    route_id::String
+    cost_usd::Float64
+    time_hours::Float64
+    carbon_kg::Float64
+    is_optimal::Bool
+end
+StructTypes.StructType(::Type{ParetoPoint}) = StructTypes.Struct()
 
-Geospatial visualizer. Color-codes segments by transport mode and 
-highlights Pareto-optimal paths with increased linewidth.
-"""
-function render_route_map(routes::Vector{Route}; backend=:cairo)
-    fig = Figure(size=(1200, 800))
-    # ... [Implementation using GeoAxis]
-    fig
+struct VEDSApp
+    port::Int
+    host::String
+    VEDSApp(; port::Int = 8080, host::String = "0.0.0.0") = new(port, host)
 end
 
-"""
-    render_pareto_frontier(points::Vector{ParetoPoint}) -> Figure
-
-Decision support visualizer. Plots the efficient frontier of routes, 
-allowing users to select the optimal balance between cost and sustainability.
-"""
-function render_pareto_frontier(points::Vector{ParetoPoint}; objectives=(:cost, :time, :carbon))
-    # ... [2D/3D Scatter plot implementation]
-    fig
+function start_server(app::VEDSApp = VEDSApp(); async::Bool = false)
+    Genie.route("/health") do
+        Genie.Renderer.Json.json(Dict("status" => "ok"))
+    end
+    Genie.up(app.port, app.host; async = async)
 end
 
-export VEDSApp, start_server, render_route_map, render_pareto_frontier
+function haversine_distance(lat1::Real, lon1::Real, lat2::Real, lon2::Real)::Float64
+    r_km = 6371.0
+    dlat = deg2rad(Float64(lat2) - Float64(lat1))
+    dlon = deg2rad(Float64(lon2) - Float64(lon1))
+    a = sin(dlat / 2)^2 + cos(deg2rad(Float64(lat1))) * cos(deg2rad(Float64(lat2))) * sin(dlon / 2)^2
+    return 2.0 * r_km * atan(sqrt(a), sqrt(1.0 - a))
+end
 
-end # module
+function generate_sample_route()::Route
+    segs = [
+        Segment("seg-1", 31.2304, 121.4737, 22.3193, 114.1694, :maritime, "COSCO", 1200.0, 36.0, 420.0, 1800),
+        Segment("seg-2", 22.3193, 114.1694, 1.3521, 103.8198, :maritime, "Maersk", 1800.0, 72.0, 610.0, 1950),
+        Segment("seg-3", 1.3521, 103.8198, 51.9225, 4.4792, :maritime, "MSC", 4100.0, 360.0, 1450.0, 2100),
+        Segment("seg-4", 51.9225, 4.4792, 53.5511, 9.9937, :rail, "DB Cargo", 650.0, 8.0, 95.0, 2400),
+    ]
+    return Route("route-001", segs, sum(s.cost_usd for s in segs), sum(s.time_hours for s in segs), sum(s.carbon_kg for s in segs), 1)
+end
+
+function render_route_map(routes::Vector{Route}; backend::Symbol = :cairo)
+    fig, ax = GeoMap.create_world_map()
+    for r in routes
+        GeoMap.add_route_overlay(ax, r.segments)
+    end
+    return fig
+end
+
+function render_pareto_frontier(points::Vector{ParetoPoint}; objectives = (:cost, :time, :carbon))
+    sols = [ParetoPlot.Solution(pt.route_id, Dict(:cost => pt.cost_usd, :time => pt.time_hours, :carbon => pt.carbon_kg), pt.is_optimal, Dict{Symbol, Any}()) for pt in points]
+    return ParetoPlot.plot_pareto_2d(sols, objectives[1], objectives[2])
+end
+
+export Segment, Route, ParetoPoint, MODE_COLORS
+export VEDSApp, start_server, haversine_distance, generate_sample_route, render_route_map, render_pareto_frontier
+
+end # module VEDSViz
